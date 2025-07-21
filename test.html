@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Area Simulator 测试页面 - 真实手机模具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Using safe area insets */
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+
+            /* Apply safe area padding */
+            padding-top: calc(16px + var(--safe-area-inset-top, 0px));
+            padding-left: calc(20px + var(--safe-area-inset-left, 0px));
+            padding-right: calc(20px + var(--safe-area-inset-right, 0px));
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .main {
+            flex: 1;
+            padding: 20px;
+
+            /* Apply safe area padding */
+            padding-left: calc(20px + var(--safe-area-inset-left, 0px));
+            padding-right: calc(20px + var(--safe-area-inset-right, 0px));
+
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 16px 20px;
+
+            /* Apply safe area padding */
+            padding-bottom: calc(16px + var(--safe-area-inset-bottom, 0px));
+            padding-left: calc(20px + var(--safe-area-inset-left, 0px));
+            padding-right: calc(20px + var(--safe-area-inset-right, 0px));
+
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .test-section h2 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .test-section p {
+            font-size: 14px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .inset-values {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .inset-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .inset-label {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+
+        .inset-value {
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+        }
+
+        .demo-box {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            text-align: center;
+        }
+
+        .instructions {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #ffc107;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .highlight-box {
+            background: rgba(52, 199, 89, 0.1);
+            border: 2px solid rgba(52, 199, 89, 0.4);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .highlight-box h3 {
+            color: #34c759;
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .highlight-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .highlight-box li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .highlight-box li::before {
+            content: '📱';
+            position: absolute;
+            left: 0;
+        }
+
+        /* Utility classes provided by the extension */
+        .safe-area-demo {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .env-demo {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+
+            /* Using env() function for compatibility */
+            padding-top: calc(16px + env(safe-area-inset-top, 0px));
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+            padding-left: calc(16px + env(safe-area-inset-left, 0px));
+            padding-right: calc(16px + env(safe-area-inset-right, 0px));
+        }
+
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+            font-size: 12px;
+            color: #00d4aa;
+        }
+
+        @media (max-width: 768px) {
+            .inset-values {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Safe Area Simulator</h1>
+            <p>插件功能测试页面 - 真实手机模具体验</p>
+        </header>
+
+        <main class="main">
+            <div class="highlight-box">
+                <h3>🎉 新功能：真实手机模具</h3>
+                <ul>
+                    <li>20+ 真实设备外观模拟（iPhone、Android）</li>
+                    <li>精确的刘海、动态岛、打孔屏渲染</li>
+                    <li>真实的设备颜色和材质效果</li>
+                    <li>可视化安全边距覆盖层</li>
+                    <li>模拟真实App界面内容</li>
+                    <li>支持横屏和竖屏模式</li>
+                </ul>
+            </div>
+
+            <div class="instructions">
+                <h3>🚀 新版本使用说明</h3>
+                <ol>
+                    <li>确保 Safe Area Simulator 插件已安装并启用</li>
+                    <li>点击浏览器工具栏中的插件图标</li>
+                    <li>开启"Enable"开关</li>
+                    <li><strong>新功能：查看真实手机模具预览</strong></li>
+                    <li>选择不同的设备型号（iPhone 15 Pro、Samsung S22等）</li>
+                    <li>使用🔍按钮切换安全边距显示</li>
+                    <li>使用📱按钮切换内容显示</li>
+                    <li>观察页面布局如何适应安全边距</li>
+                </ol>
+            </div>
+
+            <div class="test-section">
+                <h2>📊 当前安全边距值</h2>
+                <p>插件注入的CSS变量当前值：</p>
+                <div class="inset-values">
+                    <div class="inset-item">
+                        <div class="inset-label">Top</div>
+                        <div class="inset-value" id="topValue">0px</div>
+                    </div>
+                    <div class="inset-item">
+                        <div class="inset-label">Bottom</div>
+                        <div class="inset-value" id="bottomValue">0px</div>
+                    </div>
+                    <div class="inset-item">
+                        <div class="inset-label">Left</div>
+                        <div class="inset-value" id="leftValue">0px</div>
+                    </div>
+                    <div class="inset-item">
+                        <div class="inset-label">Right</div>
+                        <div class="inset-value" id="rightValue">0px</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>📱 手机模具功能展示</h2>
+                <p>插件弹窗中的新功能：</p>
+                <div class="demo-box">
+                    <strong>真实设备预览</strong><br>
+                    • 查看精确的设备外观和尺寸<br>
+                    • 真实的刘海、动态岛、打孔屏<br>
+                    • 可视化安全边距区域<br>
+                    • 模拟真实App界面
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>🎨 CSS变量演示</h2>
+                <p>使用 <span class="code">var(--safe-area-inset-*)</span> 的元素：</p>
+                <div class="safe-area-demo">
+                    <strong>CSS变量演示区域</strong><br>
+                    这个区域使用了插件注入的CSS变量来添加内边距。
+                    当你切换不同设备时，这里的边距会实时变化。
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>🔧 env() 函数演示</h2>
+                <p>使用 <span class="code">env(safe-area-inset-*)</span> 的元素：</p>
+                <div class="env-demo">
+                    <strong>env() 函数演示区域</strong><br>
+                    这个区域使用了 env() 函数，它会回退到插件提供的CSS变量。
+                    在真实的移动设备上，env() 会使用设备的实际安全边距。
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>📱 设备特色功能测试</h2>
+                <p>测试不同设备的特殊功能：</p>
+                <div class="demo-box">
+                    <strong>推荐测试设备：</strong><br>
+                    • iPhone 15 Pro Max - 动态岛<br>
+                    • iPhone 14 Pro - 动态岛<br>
+                    • iPhone X - 传统刘海<br>
+                    • Samsung S22 - 打孔屏<br>
+                    • iPhone 14 Pro (横屏) - 横屏模式
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>🛠️ 开发者工具</h2>
+                <p>打开浏览器开发者工具查看：</p>
+                <ul style="margin-top: 12px; padding-left: 20px;">
+                    <li>Console: 插件状态变化日志</li>
+                    <li>Elements: 注入的CSS变量</li>
+                    <li>Sources: 插件脚本文件</li>
+                    <li><strong>新增：手机模具渲染日志</strong></li>
+                </ul>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Safe Area Simulator v2.0 - 真实手机模具体验 ✨📱</p>
+        </footer>
+    </div>
+
+    <script>
+        // Update displayed values
+        function updateInsetValues() {
+            const computedStyle = getComputedStyle(document.documentElement);
+
+            const top = computedStyle.getPropertyValue('--safe-area-inset-top').trim() || '0px';
+            const bottom = computedStyle.getPropertyValue('--safe-area-inset-bottom').trim() || '0px';
+            const left = computedStyle.getPropertyValue('--safe-area-inset-left').trim() || '0px';
+            const right = computedStyle.getPropertyValue('--safe-area-inset-right').trim() || '0px';
+
+            document.getElementById('topValue').textContent = top;
+            document.getElementById('bottomValue').textContent = bottom;
+            document.getElementById('leftValue').textContent = left;
+            document.getElementById('rightValue').textContent = right;
+        }
+
+        // Listen for safe area changes
+        document.addEventListener('safeAreaInsetsChanged', (event) => {
+            console.log('🔄 Safe area insets changed:', event.detail);
+            updateInsetValues();
+
+            // Log device info for debugging
+            console.log('📱 Current device simulation:', {
+                enabled: event.detail.enabled,
+                insets: {
+                    top: event.detail.top,
+                    bottom: event.detail.bottom,
+                    left: event.detail.left,
+                    right: event.detail.right
+                }
+            });
+        });
+
+        // Initial update
+        updateInsetValues();
+
+        // Periodic update (in case CSS changes)
+        setInterval(updateInsetValues, 1000);
+
+        // Log current state
+        console.log('📱 Safe Area Test Page Loaded - Phone Mockup Edition');
+        console.log('🎉 New Features: Real device mockups, Dynamic Island, Punch Hole, etc.');
+        console.log('Current CSS variables:', {
+            top: getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top'),
+            bottom: getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom'),
+            left: getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-left'),
+            right: getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-right')
+        });
+    </script>
+</body>
+
+</html>

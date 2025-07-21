@@ -1,0 +1,44 @@
+{
+  "name": "chrome-safe-area-plugin",
+  "version": "1.0.0",
+  "description": "A Chrome extension to simulate mobile device safe area insets for web development",
+  "main": "background.js",
+  "scripts": {
+    "build": "echo 'No build step required'",
+    "dev": "echo 'Development mode - load as unpacked extension'",
+    "lint": "eslint *.js",
+    "generate-icons": "node create-icons.js",
+    "pnpm:generate-icons": "pnpm exec node create-icons.js",
+    "clean-icons": "rm -f icons/*.png icons/*.placeholder",
+    "install:extension": "echo 'Open Chrome -> chrome://extensions/ -> Enable Developer mode -> Load unpacked -> Select this directory'",
+    "test": "echo 'Open test.html in Chrome and enable the extension to test functionality'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "safe-area",
+    "mobile-development",
+    "css-variables",
+    "responsive-design",
+    "web-development"
+  ],
+  "author": "Developer",
+  "license": "MIT",
+  "dependencies": {
+    "sharp": "^0.34.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/username/chrome-safe-area-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/username/chrome-safe-area-plugin/issues"
+  },
+  "homepage": "https://github.com/username/chrome-safe-area-plugin#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "packageManager": "pnpm@8.0.0"
+}

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Area Simulator</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="popup-container">
+        <header class="popup-header">
+            <h1>Safe Area Simulator</h1>
+            <div class="toggle-container">
+                <label class="toggle">
+                    <input type="checkbox" id="enablePlugin">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label">Enable</span>
+            </div>
+        </header>
+
+        <main class="popup-content">
+            <div class="device-section">
+                <label for="deviceSelect" class="section-label">Device:</label>
+                <select id="deviceSelect" class="device-select">
+                    <option value="none">None (Default)</option>
+                    <optgroup label="iPhone">
+                        <option value="iphone15ProMax">iPhone 15 Pro Max</option>
+                        <option value="iphone15Pro">iPhone 15 Pro</option>
+                        <option value="iphone15">iPhone 15</option>
+                        <option value="iphone14ProMax">iPhone 14 Pro Max</option>
+                        <option value="iphone14Pro">iPhone 14 Pro</option>
+                        <option value="iphone14">iPhone 14</option>
+                        <option value="iphone13ProMax">iPhone 13 Pro Max</option>
+                        <option value="iphone13Pro">iPhone 13 Pro</option>
+                        <option value="iphone13">iPhone 13</option>
+                        <option value="iphone13Mini">iPhone 13 Mini</option>
+                        <option value="iphone12ProMax">iPhone 12 Pro Max</option>
+                        <option value="iphone12">iPhone 12/12 Pro</option>
+                        <option value="iphone12Mini">iPhone 12 Mini</option>
+                        <option value="iphoneXR">iPhone XR/11</option>
+                        <option value="iphoneX">iPhone X/XS</option>
+                    </optgroup>
+                    <optgroup label="Android">
+                        <option value="samsungS22">Samsung Galaxy S22</option>
+                        <option value="samsungS21">Samsung Galaxy S21</option>
+                        <option value="pixel4">Google Pixel 4</option>
+                        <option value="pixel3XL">Google Pixel 3 XL</option>
+                        <option value="pixelXL">Google Pixel XL</option>
+                    </optgroup>
+                    <optgroup label="Landscape">
+                        <option value="iphone14ProLandscape">iPhone 14 Pro (Landscape)</option>
+                        <option value="iphone14Landscape">iPhone 14 (Landscape)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Phone Mockup Preview -->
+            <div class="phone-mockup-section">
+                <div class="mockup-header">
+                    <span class="section-label">Device Preview:</span>
+                    <div class="mockup-controls">
+                        <button id="toggleSafeArea" class="control-btn" title="Toggle Safe Area Visibility">
+                            <span>🔍</span>
+                        </button>
+                        <button id="toggleContent" class="control-btn" title="Toggle Content Visibility">
+                            <span>📱</span>
+                        </button>
+                        <button id="toggleDeviceFrame" class="control-btn" title="Toggle Device Frame">
+                            <span>🖼️</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="phoneMockupContainer" class="phone-mockup-container"></div>
+            </div>
+
+            <div class="insets-preview" id="insetsPreview">
+                <div class="insets-info">
+                    <div class="inset-item">
+                        <span class="inset-label">Top:</span>
+                        <span class="inset-value" id="topValue">0px</span>
+                    </div>
+                    <div class="inset-item">
+                        <span class="inset-label">Bottom:</span>
+                        <span class="inset-value" id="bottomValue">0px</span>
+                    </div>
+                    <div class="inset-item">
+                        <span class="inset-label">Left:</span>
+                        <span class="inset-value" id="leftValue">0px</span>
+                    </div>
+                    <div class="inset-item">
+                        <span class="inset-label">Right:</span>
+                        <span class="inset-value" id="rightValue">0px</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="custom-section">
+                <details>
+                    <summary>Custom Safe Area</summary>
+                    <div class="custom-inputs">
+                        <div class="input-group">
+                            <label for="customTop">Top (px):</label>
+                            <input type="number" id="customTop" min="0" max="200" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label for="customBottom">Bottom (px):</label>
+                            <input type="number" id="customBottom" min="0" max="200" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label for="customLeft">Left (px):</label>
+                            <input type="number" id="customLeft" min="0" max="200" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label for="customRight">Right (px):</label>
+                            <input type="number" id="customRight" min="0" max="200" value="0">
+                        </div>
+                        <button id="applyCustom" class="apply-btn">Apply Custom</button>
+                    </div>
+                </details>
+            </div>
+        </main>
+
+        <footer class="popup-footer">
+            <p class="footer-text">CSS variables injected: <code>--safe-area-inset-*</code></p>
+        </footer>
+    </div>
+
+    <script src="devices.js"></script>
+    <script src="phone-mockup.js"></script>
+    <script src="popup.js"></script>
+</body>
+
+</html>
