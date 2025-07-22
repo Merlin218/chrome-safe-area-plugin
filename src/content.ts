@@ -81,6 +81,9 @@ class SafeAreaInjector {
     
     // Watch for DOM mutations that might indicate route changes
     this.observeDomChanges();
+    
+    // Setup periodic check for debug overlay integrity
+    this.setupPeriodicCheck();
   }
 
   private observeHistoryChanges(): void {
@@ -120,6 +123,7 @@ class SafeAreaInjector {
     // Use MutationObserver to detect significant DOM changes
     this.observer = new MutationObserver((mutations: MutationRecord[]) => {
       let shouldRecreate = false;
+      let shouldRecreateDebugOverlay = false;
       
       mutations.forEach((mutation) => {
         // Check for body or root element changes
@@ -127,18 +131,35 @@ class SafeAreaInjector {
           mutation.removedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
               const element = node as Element;
+              
+              // Check if body was removed/replaced
               if (element.tagName === 'BODY' || element.contains(document.body)) {
                 shouldRecreate = true;
+              }
+              
+              // Check if our debug overlay was removed
+              if (element.classList?.contains('safe-area-simulator-debug')) {
+                shouldRecreateDebugOverlay = true;
+              }
+              
+              // Check if any removed element contains our debug overlay
+              if (element.querySelector && element.querySelector('.safe-area-simulator-debug')) {
+                shouldRecreateDebugOverlay = true;
               }
             }
           });
           
-          // Check if our overlay was removed
+          // Check if our phone frame overlay was removed
           if (this.phoneFrameOverlay?.overlayElement && !document.body.contains(this.phoneFrameOverlay.overlayElement)) {
             shouldRecreate = true;
           }
         }
       });
+      
+      // Handle debug overlay recreation immediately if needed
+      if (shouldRecreateDebugOverlay && this.isEnabled) {
+        this.updateDebugOverlay();
+      }
       
       if (shouldRecreate) {
         // Debounce the recreation to avoid rapid recreation
@@ -158,6 +179,19 @@ class SafeAreaInjector {
     });
   }
 
+  private setupPeriodicCheck(): void {
+    // Periodically check if debug overlay exists and recreate if missing
+    setInterval(() => {
+      if (this.isEnabled && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
+        const existingOverlay = document.querySelector('.safe-area-simulator-debug');
+        if (!existingOverlay) {
+          console.log('[Safe Area Simulator] Debug overlay missing, recreating...');
+          this.updateDebugOverlay();
+        }
+      }
+    }, 2000); // Check every 2 seconds
+  }
+
   private handleRouteChange(): void {
     // Delay recreation to allow SPA to finish rendering
     if (this.routeChangeTimeout) {
@@ -165,6 +199,8 @@ class SafeAreaInjector {
     }
     this.routeChangeTimeout = window.setTimeout(() => {
       this.recreateOverlay();
+      // Force update debug overlay after route change
+      this.updateDebugOverlay();
     }, 300);
   }
 
@@ -172,7 +208,7 @@ class SafeAreaInjector {
     // Only recreate if enabled and device is selected
     if (!this.isEnabled || !this.currentDevice) return;
     
-    // Recreate the overlay
+    // Recreate the phone frame overlay
     if (this.phoneFrameOverlay) {
       this.phoneFrameOverlay.destroy();
     }
@@ -185,6 +221,9 @@ class SafeAreaInjector {
     
     this.createPhoneFrameOverlay();
     this.updatePhoneFrame();
+    
+    // Also recreate debug overlay if needed
+    this.updateDebugOverlay();
   }
 
   private createStyleElement(): void {
@@ -359,7 +398,7 @@ html {
       this.styleElement = null;
     }
     
-    // Remove debug overlay
+    // Remove debug overlay from documentElement
     const debugOverlay = document.querySelector('.safe-area-simulator-debug');
     if (debugOverlay) {
       debugOverlay.remove();
@@ -401,7 +440,8 @@ html {
         const overlay = document.createElement('div');
         overlay.className = 'safe-area-simulator-debug';
         overlay.title = 'Safe Area Simulator - Visual Guide';
-        document.body.appendChild(overlay);
+        // Insert into documentElement instead of body to avoid SPA route change issues
+        document.documentElement.appendChild(overlay);
       }
     } else {
       if (existingOverlay) {
