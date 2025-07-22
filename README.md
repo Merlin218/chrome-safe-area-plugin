@@ -102,6 +102,8 @@ chrome-safe-area-plugin/
 
 - [安装指南](./INSTALLATION.md) - 详细的安装和使用说明
 - [构建系统](./BUILD_SYSTEM.md) - 构建系统架构和规范
+- [测试说明](./TESTING.md) - 单元测试框架和运行方法
+- [故障排除](./TROUBLESHOOTING.md) - 常见问题和解决方案
 - [功能更新](./FEATURE_UPDATE.md) - 最新功能介绍
 - [快速开始](./QUICKSTART.md) - 快速上手指南
 - [TypeScript 迁移](./TYPESCRIPT_MIGRATION.md) - TypeScript 迁移说明
