@@ -28,6 +28,7 @@ class SafeAreaInjector {
   private hardwareRenderer: HardwareRegionsRenderer | null = null;
   private debugMode: boolean = false;
   private showHardwareRegions: boolean = false;
+  private showDebugOverlay: boolean = true;
   private observer: MutationObserver | null = null;
   private routeChangeTimeout: number | null = null;
   private debugOverlayObserver: MutationObserver | null = null;
@@ -65,11 +66,12 @@ class SafeAreaInjector {
 
   private async loadStoredState(): Promise<void> {
     try {
-      const result = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDeviceFrame', 'showHardwareRegions', 'debugMode']);
+      const result = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDeviceFrame', 'showHardwareRegions', 'showDebugOverlay', 'debugMode']);
       this.isEnabled = result.enabled || false;
       this.currentDevice = result.device || null;
       this.debugMode = result.debugMode || false;
       this.showHardwareRegions = result.showHardwareRegions !== false; // Default to true
+      this.showDebugOverlay = result.showDebugOverlay !== false; // Default to true
       
       if (this.isEnabled && result.device && DEVICES[result.device]) {
         const device = DEVICES[result.device];
@@ -274,7 +276,7 @@ class SafeAreaInjector {
   private setupPeriodicCheck(): void {
     // High-frequency check for debug overlay integrity
     setInterval(() => {
-      if (this.isEnabled && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
+      if (this.isEnabled && this.showDebugOverlay && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
         const existingOverlay = document.querySelector('.safe-area-simulator-debug');
         if (!existingOverlay) {
           console.log('[Safe Area Simulator] Debug overlay missing, recreating...');
@@ -285,7 +287,7 @@ class SafeAreaInjector {
     
     // Additional requestAnimationFrame-based check for maximum responsiveness
     const animationFrameCheck = () => {
-      if (this.isEnabled && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
+      if (this.isEnabled && this.showDebugOverlay && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
         const existingOverlay = document.querySelector('.safe-area-simulator-debug');
         if (!existingOverlay) {
           this.updateDebugOverlay();
@@ -316,7 +318,7 @@ class SafeAreaInjector {
     
     // Immediately check if overlay still exists
     const existingOverlay = document.querySelector('.safe-area-simulator-debug');
-    if (this.isEnabled && !existingOverlay && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
+    if (this.isEnabled && this.showDebugOverlay && !existingOverlay && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
       console.log('[Safe Area Simulator] Overlay missing after route change, recreating immediately');
       this.updateDebugOverlay();
     }
@@ -334,7 +336,7 @@ class SafeAreaInjector {
     // Also check again after a longer delay in case the SPA does late rendering
     setTimeout(() => {
       const laterOverlay = document.querySelector('.safe-area-simulator-debug');
-      if (this.isEnabled && !laterOverlay && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
+      if (this.isEnabled && this.showDebugOverlay && !laterOverlay && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {
         console.log('[Safe Area Simulator] Late overlay check - recreating');
         this.updateDebugOverlay();
       }
@@ -397,6 +399,12 @@ class SafeAreaInjector {
         if (message.settings?.showHardwareRegions !== undefined) {
           this.showHardwareRegions = message.settings.showHardwareRegions;
           chrome.storage.sync.set({ showHardwareRegions: this.showHardwareRegions });
+        }
+        
+        // Handle debug overlay setting
+        if (message.settings?.showDebugOverlay !== undefined) {
+          this.showDebugOverlay = message.settings.showDebugOverlay;
+          chrome.storage.sync.set({ showDebugOverlay: this.showDebugOverlay });
         }
         
         this.updateStyles();
@@ -624,7 +632,7 @@ html {
 
   private updateDebugOverlay(): void {
     const existingOverlay = document.querySelector('.safe-area-simulator-debug');
-    const shouldShowOverlay = this.isEnabled && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0);
+    const shouldShowOverlay = this.isEnabled && this.showDebugOverlay && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0);
     
     if (shouldShowOverlay) {
       if (!existingOverlay) {
