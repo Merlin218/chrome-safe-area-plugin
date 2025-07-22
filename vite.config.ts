@@ -31,7 +31,7 @@ async function createZipPackage(sourceDir: string, outputPath: string): Promise<
 }
 
 // Enhanced plugin to copy static files and handle Chrome extension specifics
-function chromeExtensionPlugin() {
+function chromeExtensionPlugin(isDev: boolean = false) {
   return {
     name: 'chrome-extension-plugin',
     generateBundle(options, bundle) {
@@ -112,8 +112,8 @@ function chromeExtensionPlugin() {
       
       console.log('📦 Static files copied successfully');
       
-      // Create zip package if enabled
-      if (process.env.CREATE_ZIP !== 'false') {
+      // Create zip package if enabled (skip in development mode)
+      if (!isDev && process.env.CREATE_ZIP !== 'false') {
         try {
           // Ensure packages directory exists
           const packagesDir = 'packages';
@@ -131,6 +131,8 @@ function chromeExtensionPlugin() {
         } catch (error) {
           console.error('❌ Error creating zip package:', error);
         }
+      } else if (isDev) {
+        console.log('⚡ Development mode: Skipping zip package creation');
       }
     },
     buildStart() {
@@ -148,42 +150,46 @@ function chromeExtensionPlugin() {
   };
 }
 
-export default defineConfig({
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      '@types': resolve(__dirname, 'types')
-    }
-  },
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    minify: false,
-        sourcemap: true,
-    rollupOptions: {
-      input: {
-        background: resolve(__dirname, 'src/background.ts'),
-        content: resolve(__dirname, 'src/content.ts'),
-        devices: resolve(__dirname, 'src/devices.ts'),
-        'phone-frame-simple': resolve(__dirname, 'src/phone-frame-simple.ts'),
-        'phone-mockup': resolve(__dirname, 'src/phone-mockup.ts'),
-        popup: resolve(__dirname, 'src/popup.ts'),
-      },
-      output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]',
-        format: 'es'
-      },
-      external: ['chrome']
+export default defineConfig(({ mode }) => {
+  const isDev = mode === 'development';
+  
+  return {
+    resolve: {
+      alias: {
+        '@': resolve(__dirname, 'src'),
+        '@types': resolve(__dirname, 'types')
+      }
     },
-    target: 'es2020'
-  },
-  plugins: [chromeExtensionPlugin()],
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
-  },
-  optimizeDeps: {
-    exclude: ['chrome']
-  }
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+      minify: isDev ? false : 'esbuild',
+      sourcemap: isDev ? 'inline' : true,
+      rollupOptions: {
+        input: {
+          background: resolve(__dirname, 'src/background.ts'),
+          content: resolve(__dirname, 'src/content.ts'),
+          devices: resolve(__dirname, 'src/devices.ts'),
+          'phone-frame-simple': resolve(__dirname, 'src/phone-frame-simple.ts'),
+          'phone-mockup': resolve(__dirname, 'src/phone-mockup.ts'),
+          popup: resolve(__dirname, 'src/popup.ts'),
+        },
+        output: {
+          entryFileNames: '[name].js',
+          chunkFileNames: '[name].js',
+          assetFileNames: '[name].[ext]',
+          format: 'es'
+        },
+        external: ['chrome']
+      },
+      target: 'es2020'
+    },
+    plugins: [chromeExtensionPlugin(isDev)],
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(isDev ? 'development' : 'production')
+    },
+    optimizeDeps: {
+      exclude: ['chrome']
+    }
+  };
 }); 
