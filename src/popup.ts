@@ -1,19 +1,32 @@
 // Popup script for Safe Area Simulator
+/// <reference types="chrome" />
+import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets, MockupOptions } from '../types/global.js';
+import DEVICES from './devices.js';
+
+// Declare PhoneMockup class that will be loaded separately
+declare class PhoneMockup {
+  constructor(container: HTMLElement, options: any);
+  updateDevice(deviceKey: string, safeAreaInsets: SafeAreaInsets): void;
+  showPlaceholder(): void;
+  setOptions(options: Partial<MockupOptions>): void;
+}
+
 class SafeAreaPopup {
+  private currentDevice: string = 'none';
+  private isEnabled: boolean = false;
+  private customInsets: SafeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 };
+  private phoneMockup: PhoneMockup | null = null;
+  private mockupOptions: MockupOptions = {
+    showSafeArea: true,
+    showContent: true
+  };
+  private showDeviceFrame: boolean = false;
+  
   constructor() {
-    this.currentDevice = 'none';
-    this.isEnabled = false;
-    this.customInsets = { top: 0, bottom: 0, left: 0, right: 0 };
-    this.phoneMockup = null;
-    this.mockupOptions = {
-      showSafeArea: true,
-      showContent: true
-    };
-    
     this.init();
   }
 
-  async init() {
+  private async init(): Promise<void> {
     await this.loadState();
     this.initPhoneMockup();
     this.bindEvents();
@@ -21,7 +34,7 @@ class SafeAreaPopup {
     this.updatePreview();
   }
 
-  async loadState() {
+  private async loadState(): Promise<void> {
     try {
       const result = await chrome.storage.sync.get(['device', 'enabled', 'customInsets', 'mockupOptions', 'showDeviceFrame']);
       this.currentDevice = result.device || 'none';
@@ -34,7 +47,7 @@ class SafeAreaPopup {
     }
   }
 
-  async saveState() {
+  private async saveState(): Promise<void> {
     try {
       await chrome.storage.sync.set({
         device: this.currentDevice,
@@ -48,9 +61,9 @@ class SafeAreaPopup {
     }
   }
 
-  initPhoneMockup() {
+  private initPhoneMockup(): void {
     try {
-      const container = document.getElementById('phoneMockupContainer');
+      const container = document.getElementById('phoneMockupContainer') as HTMLElement;
       if (!container) {
         console.error('[Safe Area Simulator] Phone mockup container not found');
         return;
@@ -71,15 +84,15 @@ class SafeAreaPopup {
     }
   }
 
-  bindEvents() {
+  private bindEvents(): void {
     // Toggle switch
-    const enableToggle = document.getElementById('enablePlugin');
+    const enableToggle = document.getElementById('enablePlugin') as HTMLInputElement;
     if (enableToggle) {
       enableToggle.addEventListener('change', this.handleToggle.bind(this));
     }
 
     // Device selection
-    const deviceSelect = document.getElementById('deviceSelect');
+    const deviceSelect = document.getElementById('deviceSelect') as HTMLSelectElement;
     if (deviceSelect) {
       deviceSelect.addEventListener('change', this.handleDeviceChange.bind(this));
     }
@@ -87,22 +100,22 @@ class SafeAreaPopup {
     // Custom inputs
     const customInputs = ['customTop', 'customBottom', 'customLeft', 'customRight'];
     customInputs.forEach(id => {
-      const input = document.getElementById(id);
+      const input = document.getElementById(id) as HTMLInputElement;
       if (input) {
         input.addEventListener('input', this.handleCustomInput.bind(this));
       }
     });
 
     // Apply custom button
-    const applyCustomBtn = document.getElementById('applyCustom');
+    const applyCustomBtn = document.getElementById('applyCustom') as HTMLButtonElement;
     if (applyCustomBtn) {
       applyCustomBtn.addEventListener('click', this.handleApplyCustom.bind(this));
     }
 
     // Mockup control buttons
-    const toggleSafeAreaBtn = document.getElementById('toggleSafeArea');
-    const toggleContentBtn = document.getElementById('toggleContent');
-    const toggleDeviceFrameBtn = document.getElementById('toggleDeviceFrame');
+    const toggleSafeAreaBtn = document.getElementById('toggleSafeArea') as HTMLButtonElement;
+    const toggleContentBtn = document.getElementById('toggleContent') as HTMLButtonElement;
+    const toggleDeviceFrameBtn = document.getElementById('toggleDeviceFrame') as HTMLButtonElement;
     
     if (toggleSafeAreaBtn) {
       toggleSafeAreaBtn.addEventListener('click', this.handleToggleSafeArea.bind(this));
@@ -118,16 +131,18 @@ class SafeAreaPopup {
     this.updateMockupControls();
   }
 
-  async handleToggle(event) {
-    this.isEnabled = event.target.checked;
+  private async handleToggle(event: Event): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    this.isEnabled = target.checked;
     await this.saveState();
     this.updateUI();
     this.updatePhoneMockup();
     this.sendMessageToContentScript();
   }
 
-  async handleDeviceChange(event) {
-    this.currentDevice = event.target.value;
+  private async handleDeviceChange(event: Event): Promise<void> {
+    const target = event.target as HTMLSelectElement;
+    this.currentDevice = target.value;
     await this.saveState();
     this.updatePreview();
     this.updatePhoneMockup();
@@ -137,12 +152,13 @@ class SafeAreaPopup {
     }
   }
 
-  handleCustomInput(event) {
-    const property = event.target.id.replace('custom', '').toLowerCase();
-    this.customInsets[property] = parseInt(event.target.value) || 0;
+  private handleCustomInput(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const property = target.id.replace('custom', '').toLowerCase() as keyof SafeAreaInsets;
+    this.customInsets[property] = parseInt(target.value) || 0;
   }
 
-  async handleApplyCustom() {
+  private async handleApplyCustom(): Promise<void> {
     // Create a custom device configuration
     const customDevice = {
       name: 'Custom',
@@ -155,7 +171,7 @@ class SafeAreaPopup {
         borderRadius: 20,
         screenRadius: 16,
         notch: {
-          type: 'none'
+          type: 'none' as const
         },
         homeIndicator: {
           width: 36,
@@ -163,7 +179,7 @@ class SafeAreaPopup {
           radius: 1
         },
         colors: ['#667eea', '#764ba2', '#8b7bc7'],
-        brand: 'custom'
+        brand: 'custom' as const
       }
     };
 
@@ -174,8 +190,8 @@ class SafeAreaPopup {
     this.currentDevice = 'custom';
     
     // Update device select
-    const deviceSelect = document.getElementById('deviceSelect');
-    let customOption = deviceSelect.querySelector('option[value="custom"]');
+    const deviceSelect = document.getElementById('deviceSelect') as HTMLSelectElement;
+    let customOption = deviceSelect.querySelector('option[value="custom"]') as HTMLOptionElement;
     if (!customOption) {
       customOption = document.createElement('option');
       customOption.value = 'custom';
@@ -193,7 +209,7 @@ class SafeAreaPopup {
     }
   }
 
-  async handleToggleSafeArea() {
+  private async handleToggleSafeArea(): Promise<void> {
     this.mockupOptions.showSafeArea = !this.mockupOptions.showSafeArea;
     await this.saveState();
     this.updateMockupControls();
@@ -203,7 +219,7 @@ class SafeAreaPopup {
     }
   }
 
-  async handleToggleContent() {
+  private async handleToggleContent(): Promise<void> {
     this.mockupOptions.showContent = !this.mockupOptions.showContent;
     await this.saveState();
     this.updateMockupControls();
@@ -213,17 +229,17 @@ class SafeAreaPopup {
     }
   }
 
-  async handleToggleDeviceFrame() {
+  private async handleToggleDeviceFrame(): Promise<void> {
     this.showDeviceFrame = !this.showDeviceFrame;
     await this.saveState();
     this.updateMockupControls();
     this.sendMessageToContentScript();
   }
 
-  updateMockupControls() {
-    const toggleSafeAreaBtn = document.getElementById('toggleSafeArea');
-    const toggleContentBtn = document.getElementById('toggleContent');
-    const toggleDeviceFrameBtn = document.getElementById('toggleDeviceFrame');
+  private updateMockupControls(): void {
+    const toggleSafeAreaBtn = document.getElementById('toggleSafeArea') as HTMLButtonElement;
+    const toggleContentBtn = document.getElementById('toggleContent') as HTMLButtonElement;
+    const toggleDeviceFrameBtn = document.getElementById('toggleDeviceFrame') as HTMLButtonElement;
     
     toggleSafeAreaBtn.classList.toggle('active', this.mockupOptions.showSafeArea);
     toggleContentBtn.classList.toggle('active', this.mockupOptions.showContent);
@@ -234,10 +250,10 @@ class SafeAreaPopup {
     toggleDeviceFrameBtn.title = this.showDeviceFrame ? 'Hide Device Frame' : 'Show Device Frame';
   }
 
-  updateUI() {
-    const enableToggle = document.getElementById('enablePlugin');
-    const popupContent = document.querySelector('.popup-content');
-    const deviceSelect = document.getElementById('deviceSelect');
+  private updateUI(): void {
+    const enableToggle = document.getElementById('enablePlugin') as HTMLInputElement;
+    const popupContent = document.querySelector('.popup-content') as HTMLElement;
+    const deviceSelect = document.getElementById('deviceSelect') as HTMLSelectElement;
 
     enableToggle.checked = this.isEnabled;
     deviceSelect.value = this.currentDevice;
@@ -251,28 +267,38 @@ class SafeAreaPopup {
     }
   }
 
-  updatePreview() {
+  private updatePreview(): void {
     const device = DEVICES[this.currentDevice];
     if (!device) return;
 
     const { safeAreaInsets } = device;
 
     // Update numeric values
-    document.getElementById('topValue').textContent = `${safeAreaInsets.top}px`;
-    document.getElementById('bottomValue').textContent = `${safeAreaInsets.bottom}px`;
-    document.getElementById('leftValue').textContent = `${safeAreaInsets.left}px`;
-    document.getElementById('rightValue').textContent = `${safeAreaInsets.right}px`;
+    const topValue = document.getElementById('topValue') as HTMLElement;
+    const bottomValue = document.getElementById('bottomValue') as HTMLElement;
+    const leftValue = document.getElementById('leftValue') as HTMLElement;
+    const rightValue = document.getElementById('rightValue') as HTMLElement;
+
+    topValue.textContent = `${safeAreaInsets.top}px`;
+    bottomValue.textContent = `${safeAreaInsets.bottom}px`;
+    leftValue.textContent = `${safeAreaInsets.left}px`;
+    rightValue.textContent = `${safeAreaInsets.right}px`;
 
     // Update custom inputs if it's a custom device
     if (this.currentDevice === 'custom') {
-      document.getElementById('customTop').value = safeAreaInsets.top;
-      document.getElementById('customBottom').value = safeAreaInsets.bottom;
-      document.getElementById('customLeft').value = safeAreaInsets.left;
-      document.getElementById('customRight').value = safeAreaInsets.right;
+      const customTop = document.getElementById('customTop') as HTMLInputElement;
+      const customBottom = document.getElementById('customBottom') as HTMLInputElement;
+      const customLeft = document.getElementById('customLeft') as HTMLInputElement;
+      const customRight = document.getElementById('customRight') as HTMLInputElement;
+
+      customTop.value = safeAreaInsets.top.toString();
+      customBottom.value = safeAreaInsets.bottom.toString();
+      customLeft.value = safeAreaInsets.left.toString();
+      customRight.value = safeAreaInsets.right.toString();
     }
   }
 
-  updatePhoneMockup() {
+  private updatePhoneMockup(): void {
     if (!this.phoneMockup) return;
 
     const device = DEVICES[this.currentDevice];
@@ -285,7 +311,7 @@ class SafeAreaPopup {
     this.phoneMockup.updateDevice(this.currentDevice, safeAreaInsets);
   }
 
-  async sendMessageToContentScript() {
+  private async sendMessageToContentScript(): Promise<void> {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       
@@ -300,20 +326,20 @@ class SafeAreaPopup {
         return;
       }
 
-      const message = {
+      const message: SafeAreaMessage = {
         action: 'updateSafeArea',
         enabled: this.isEnabled,
         device: this.currentDevice,
         showDeviceFrame: this.showDeviceFrame,
-        insets: this.isEnabled && DEVICES[this.currentDevice] 
-          ? DEVICES[this.currentDevice].safeAreaInsets 
+        insets: this.isEnabled && this.currentDevice && DEVICES[this.currentDevice] 
+          ? DEVICES[this.currentDevice]!.safeAreaInsets 
           : { top: 0, bottom: 0, left: 0, right: 0 }
       };
 
       await chrome.tabs.sendMessage(tab.id, message);
     } catch (error) {
       // Silently handle connection errors as they're common when content script isn't ready
-      if (error.message && error.message.includes('Could not establish connection')) {
+      if (error instanceof Error && error.message && error.message.includes('Could not establish connection')) {
         console.log('[Safe Area Simulator] Content script not ready yet');
       } else {
         console.error('Error sending message to content script:', error);

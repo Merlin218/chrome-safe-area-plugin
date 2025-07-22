@@ -2,16 +2,23 @@
   "name": "chrome-safe-area-plugin",
   "version": "1.0.0",
   "description": "A Chrome extension to simulate mobile device safe area insets for web development",
-  "main": "background.js",
+  "type": "module",
   "scripts": {
-    "build": "echo 'No build step required'",
-    "dev": "echo 'Development mode - load as unpacked extension'",
-    "lint": "eslint *.js",
+    "dev": "npm run build && npm run dev:watch",
+    "dev:watch": "vite build --watch",
+    "build": "npm run type-check && vite build",
+    "build:legacy": "node scripts/build.cjs",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.js",
+    "lint:fix": "eslint src --ext .ts,.js --fix",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
     "generate-icons": "node create-icons.js",
-    "pnpm:generate-icons": "pnpm exec node create-icons.js",
     "clean-icons": "rm -f icons/*.png icons/*.placeholder",
-    "install:extension": "echo 'Open Chrome -> chrome://extensions/ -> Enable Developer mode -> Load unpacked -> Select this directory'",
-    "test": "echo 'Open test.html in Chrome and enable the extension to test functionality'"
+    "install:extension": "echo 'Open Chrome -> chrome://extensions/ -> Enable Developer mode -> Load unpacked -> Select ./dist directory'",
+    "test": "echo 'Open test.html in Chrome and enable the extension to test functionality'",
+    "validate": "npm run type-check && npm run lint"
   },
   "keywords": [
     "chrome-extension",
@@ -19,15 +26,22 @@
     "mobile-development",
     "css-variables",
     "responsive-design",
-    "web-development"
+    "web-development",
+    "typescript"
   ],
   "author": "Developer",
   "license": "MIT",
   "dependencies": {
-    "sharp": "^0.34.3"
+    "sharp": "^0.33.0"
   },
   "devDependencies": {
-    "eslint": "^8.0.0"
+    "@types/chrome": "^0.0.270",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
   },
   "repository": {
     "type": "git",

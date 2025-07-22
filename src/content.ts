@@ -1,19 +1,32 @@
 // Content script for Safe Area Simulator
+/// <reference types="chrome" />
+import type { SafeAreaInsets, SafeAreaMessage } from '../types/global.js';
+import DEVICES from './devices.js';
+
+// Declare PhoneFrameSimple class that will be loaded separately
+declare class PhoneFrameSimple {
+  constructor(options: any);
+  destroy(): void;
+  updateDevice(device: string, insets: SafeAreaInsets): void;
+  hide(): void;
+  overlayElement?: HTMLElement;
+}
+
 class SafeAreaInjector {
+  private isEnabled: boolean = false;
+  private currentDevice: string | null = null;
+  private currentInsets: SafeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 };
+  private styleElement: HTMLStyleElement | null = null;
+  private phoneFrameOverlay: PhoneFrameSimple | null = null;
+  private debugMode: boolean = false;
+  private observer: MutationObserver | null = null;
+  private routeChangeTimeout: number | null = null;
+  
   constructor() {
-    this.isEnabled = false;
-    this.currentDevice = null;
-    this.currentInsets = { top: 0, bottom: 0, left: 0, right: 0 };
-    this.styleElement = null;
-    this.phoneFrameOverlay = null;
-    this.debugMode = false;
-    this.observer = null;
-    this.routeChangeTimeout = null;
-    
     this.init();
   }
 
-  init() {
+  private init(): void {
     this.loadStoredState();
     this.createStyleElement();
     this.setupMessageListener();
@@ -22,14 +35,14 @@ class SafeAreaInjector {
     this.setupRouteObserver();
   }
 
-  async loadStoredState() {
+  private async loadStoredState(): Promise<void> {
     try {
       const result = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDeviceFrame', 'debugMode']);
       this.isEnabled = result.enabled || false;
       this.currentDevice = result.device || null;
       this.debugMode = result.debugMode || false;
       
-      if (this.isEnabled && result.device) {
+      if (this.isEnabled && result.device && DEVICES[result.device]) {
         const device = DEVICES[result.device];
         if (device) {
           this.currentInsets = device.safeAreaInsets;
@@ -40,7 +53,7 @@ class SafeAreaInjector {
     }
   }
 
-  createPhoneFrameOverlay() {
+  private createPhoneFrameOverlay(): void {
     try {
       // Check if PhoneFrameSimple class is available
       if (typeof PhoneFrameSimple === 'undefined') {
@@ -59,7 +72,7 @@ class SafeAreaInjector {
     }
   }
 
-  setupRouteObserver() {
+  private setupRouteObserver(): void {
     // Watch for SPA route changes using History API
     this.observeHistoryChanges();
     
@@ -70,17 +83,17 @@ class SafeAreaInjector {
     this.observeDomChanges();
   }
 
-  observeHistoryChanges() {
+  private observeHistoryChanges(): void {
     // Override pushState and replaceState to detect route changes
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
     
-    history.pushState = (...args) => {
+    history.pushState = (...args: Parameters<typeof history.pushState>) => {
       originalPushState.apply(history, args);
       this.handleRouteChange();
     };
     
-    history.replaceState = (...args) => {
+    history.replaceState = (...args: Parameters<typeof history.replaceState>) => {
       originalReplaceState.apply(history, args);
       this.handleRouteChange();
     };
@@ -91,7 +104,7 @@ class SafeAreaInjector {
     });
   }
 
-  observeUrlChanges() {
+  private observeUrlChanges(): void {
     let lastUrl = location.href;
     
     // Check for URL changes periodically
@@ -103,9 +116,9 @@ class SafeAreaInjector {
     }, 500);
   }
 
-  observeDomChanges() {
+  private observeDomChanges(): void {
     // Use MutationObserver to detect significant DOM changes
-    this.observer = new MutationObserver((mutations) => {
+    this.observer = new MutationObserver((mutations: MutationRecord[]) => {
       let shouldRecreate = false;
       
       mutations.forEach((mutation) => {
@@ -113,14 +126,15 @@ class SafeAreaInjector {
         if (mutation.type === 'childList') {
           mutation.removedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-              if (node.tagName === 'BODY' || node.contains(document.body)) {
+              const element = node as Element;
+              if (element.tagName === 'BODY' || element.contains(document.body)) {
                 shouldRecreate = true;
               }
             }
           });
           
           // Check if our overlay was removed
-          if (!document.body.contains(this.phoneFrameOverlay?.overlayElement)) {
+          if (this.phoneFrameOverlay?.overlayElement && !document.body.contains(this.phoneFrameOverlay.overlayElement)) {
             shouldRecreate = true;
           }
         }
@@ -128,8 +142,10 @@ class SafeAreaInjector {
       
       if (shouldRecreate) {
         // Debounce the recreation to avoid rapid recreation
-        clearTimeout(this.routeChangeTimeout);
-        this.routeChangeTimeout = setTimeout(() => {
+        if (this.routeChangeTimeout) {
+          clearTimeout(this.routeChangeTimeout);
+        }
+        this.routeChangeTimeout = window.setTimeout(() => {
           this.recreateOverlay();
         }, 100);
       }
@@ -142,15 +158,17 @@ class SafeAreaInjector {
     });
   }
 
-  handleRouteChange() {
+  private handleRouteChange(): void {
     // Delay recreation to allow SPA to finish rendering
-    clearTimeout(this.routeChangeTimeout);
-    this.routeChangeTimeout = setTimeout(() => {
+    if (this.routeChangeTimeout) {
+      clearTimeout(this.routeChangeTimeout);
+    }
+    this.routeChangeTimeout = window.setTimeout(() => {
       this.recreateOverlay();
     }, 300);
   }
 
-  recreateOverlay() {
+  private recreateOverlay(): void {
     // Only recreate if enabled and device is selected
     if (!this.isEnabled || !this.currentDevice) return;
     
@@ -169,17 +187,21 @@ class SafeAreaInjector {
     this.updatePhoneFrame();
   }
 
-  createStyleElement() {
+  private createStyleElement(): void {
     this.styleElement = document.createElement('style');
     this.styleElement.id = 'safe-area-simulator-styles';
     document.head.appendChild(this.styleElement);
   }
 
-  setupMessageListener() {
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  private setupMessageListener(): void {
+    chrome.runtime.onMessage.addListener((
+      message: SafeAreaMessage, 
+      sender: chrome.runtime.MessageSender, 
+      sendResponse: (response: any) => void
+    ) => {
       if (message.action === 'updateSafeArea') {
-        this.isEnabled = message.enabled;
-        this.currentInsets = message.insets;
+        this.isEnabled = message.enabled || false;
+        this.currentInsets = message.insets || { top: 0, bottom: 0, left: 0, right: 0 };
         this.currentDevice = message.device || this.currentDevice;
         
         // Save device frame preference
@@ -195,7 +217,7 @@ class SafeAreaInjector {
     });
   }
 
-  injectInitialStyles() {
+  private injectInitialStyles(): void {
     // Add base styles that might be useful for developers
     const baseStyles = `
 /* Safe Area Simulator - Base Styles */
@@ -250,11 +272,13 @@ class SafeAreaInjector {
 }
 `;
 
-    this.styleElement.textContent = baseStyles;
+    if (this.styleElement) {
+      this.styleElement.textContent = baseStyles;
+    }
     this.updateStyles();
   }
 
-  updateStyles() {
+  private updateStyles(): void {
     if (!this.styleElement) return;
 
     const { top, bottom, left, right } = this.isEnabled ? this.currentInsets : { top: 0, bottom: 0, left: 0, right: 0 };
@@ -278,7 +302,7 @@ html {
 `;
 
     // Update existing styles
-    const existingStyles = this.styleElement.textContent;
+    const existingStyles = this.styleElement.textContent || '';
     const baseStylesMatch = existingStyles.match(/(\/\* Safe Area Simulator - Base Styles \*\/[\s\S]*?)(:root {|$)/);
     
     if (baseStylesMatch) {
@@ -314,7 +338,7 @@ html {
     }
   }
 
-  destroy() {
+  destroy(): void {
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
@@ -343,11 +367,11 @@ html {
   }
 
   // Handle extension disable/unload
-  handleExtensionDisable() {
+  handleExtensionDisable(): void {
     this.destroy();
   }
 
-  updatePhoneFrame() {
+  private updatePhoneFrame(): void {
     if (!this.phoneFrameOverlay) return;
     
     try {
@@ -369,7 +393,7 @@ html {
     }
   }
 
-  updateDebugOverlay() {
+  private updateDebugOverlay(): void {
     const existingOverlay = document.querySelector('.safe-area-simulator-debug');
     
     if (this.isEnabled && (this.currentInsets.top > 0 || this.currentInsets.bottom > 0 || this.currentInsets.left > 0 || this.currentInsets.right > 0)) {

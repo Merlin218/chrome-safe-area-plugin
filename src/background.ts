@@ -1,17 +1,20 @@
 // Background script for Safe Area Simulator
+/// <reference types="chrome" />
+import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets } from '../types/global.js';
+
 class SafeAreaBackground {
   constructor() {
     this.init();
   }
 
-  init() {
+  private init(): void {
     this.setupInstallListener();
     this.setupTabUpdateListener();
     this.setupMessageListener();
   }
 
-  setupInstallListener() {
-    chrome.runtime.onInstalled.addListener((details) => {
+  private setupInstallListener(): void {
+    chrome.runtime.onInstalled.addListener((details: chrome.runtime.InstalledDetails) => {
       if (details.reason === 'install') {
         this.setDefaultSettings();
         this.showWelcomeNotification();
@@ -21,8 +24,8 @@ class SafeAreaBackground {
     });
   }
 
-  setupTabUpdateListener() {
-    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  private setupTabUpdateListener(): void {
+    chrome.tabs.onUpdated.addListener(async (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
       // When a tab finishes loading, apply current safe area settings
       if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith('chrome://')) {
         await this.applyCurrentSettings(tabId);
@@ -30,8 +33,12 @@ class SafeAreaBackground {
     });
   }
 
-  setupMessageListener() {
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  private setupMessageListener(): void {
+    chrome.runtime.onMessage.addListener((
+      message: SafeAreaMessage, 
+      sender: chrome.runtime.MessageSender, 
+      sendResponse: (response: any) => void
+    ) => {
       switch (message.action) {
         case 'getCurrentSettings':
           this.getCurrentSettings().then(sendResponse);
@@ -41,11 +48,12 @@ class SafeAreaBackground {
           return true;
         default:
           sendResponse({ error: 'Unknown action' });
+          return false;
       }
     });
   }
 
-  async setDefaultSettings() {
+  private async setDefaultSettings(): Promise<void> {
     try {
       await chrome.storage.sync.set({
         enabled: false,
@@ -58,7 +66,7 @@ class SafeAreaBackground {
     }
   }
 
-  async showWelcomeNotification() {
+  private async showWelcomeNotification(): Promise<void> {
     try {
       await chrome.notifications.create({
         type: 'basic',
@@ -72,12 +80,12 @@ class SafeAreaBackground {
     }
   }
 
-  async handleUpdate(previousVersion) {
+  private async handleUpdate(previousVersion?: string): Promise<void> {
     console.log(`Updated from version ${previousVersion}`);
     // Handle any migration logic here if needed
   }
 
-  async getCurrentSettings() {
+  private async getCurrentSettings(): Promise<SafeAreaSettings | null> {
     try {
       const settings = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDebugOverlay']);
       return {
@@ -92,7 +100,7 @@ class SafeAreaBackground {
     }
   }
 
-  async applyCurrentSettings(tabId) {
+  private async applyCurrentSettings(tabId: number): Promise<void> {
     try {
       const settings = await this.getCurrentSettings();
       if (!settings || !settings.enabled) return;
@@ -101,7 +109,7 @@ class SafeAreaBackground {
       const insets = await this.getDeviceInsets(settings.device);
       if (!insets) return;
 
-      const message = {
+      const message: SafeAreaMessage = {
         action: 'updateSafeArea',
         enabled: settings.enabled,
         device: settings.device,
@@ -111,14 +119,14 @@ class SafeAreaBackground {
       await chrome.tabs.sendMessage(tabId, message);
     } catch (error) {
       // Tab might not be ready or content script not injected yet
-      console.log('Could not apply settings to tab:', error.message);
+      console.log('Could not apply settings to tab:', error);
     }
   }
 
-  async getDeviceInsets(deviceKey) {
+  private async getDeviceInsets(deviceKey: string): Promise<SafeAreaInsets | null> {
     // This would need to include the device data or fetch it
     // For now, return basic iPhone 14 Pro data as example
-    const deviceData = {
+    const deviceData: Record<string, SafeAreaInsets> = {
       'none': { top: 0, bottom: 0, left: 0, right: 0 },
       'iphone14Pro': { top: 59, bottom: 34, left: 0, right: 0 },
       'iphone14': { top: 47, bottom: 34, left: 0, right: 0 },
@@ -128,18 +136,18 @@ class SafeAreaBackground {
     return deviceData[deviceKey] || { top: 0, bottom: 0, left: 0, right: 0 };
   }
 
-  async updateAllTabs(settings) {
+  private async updateAllTabs(settings?: SafeAreaSettings): Promise<{ success: boolean; error?: string }> {
     try {
       const tabs = await chrome.tabs.query({});
       const updatePromises = tabs
-        .filter(tab => tab.url && !tab.url.startsWith('chrome://'))
-        .map(tab => this.applyCurrentSettings(tab.id));
+        .filter((tab: chrome.tabs.Tab) => tab.url && !tab.url.startsWith('chrome://'))
+        .map((tab: chrome.tabs.Tab) => tab.id ? this.applyCurrentSettings(tab.id) : Promise.resolve());
 
       await Promise.allSettled(updatePromises);
       return { success: true };
     } catch (error) {
       console.error('Error updating all tabs:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 }

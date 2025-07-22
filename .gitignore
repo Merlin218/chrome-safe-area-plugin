@@ -20,10 +20,24 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 
+# Build output
+dist/
+build/
+
 # Extension development
 *.crx
 *.pem
 *.zip
+
+# Legacy files (should not be committed)
+background.js
+content.js
+devices.js
+popup.js
+phone-*.js
+manifest.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
 
 # Temporary files
 *.tmp
@@ -35,4 +49,10 @@ logs/
 *.log
 
 # Placeholder files (development only)
-*.placeholder 
+*.placeholder
+
+# ESLint cache
+.eslintcache
+
+# TypeScript cache
+*.tsbuildinfo 

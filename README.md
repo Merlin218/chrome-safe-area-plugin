@@ -1,216 +1,164 @@
-# Safe Area Simulator - Chrome浏览器插件
+# Chrome Safe Area Plugin
 
-一个专为前端开发者设计的Chrome浏览器插件，用于在网页中模拟不同移动设备的安全边距（safe area insets），帮助开发者更好地测试和优化响应式设计。
+> 一个用于模拟移动设备安全区域插入的现代化 Chrome 扩展，使用 TypeScript + Vite 构建。
 
-## 功能特性
+## ✨ 功能特性
 
-- ✨ **设备模拟**: 支持iPhone、Android等主流移动设备的安全边距模拟
-- 🎯 **实时切换**: 无需刷新页面即可切换不同设备的安全边距
-- 🎨 **可视化预览**: 插件弹窗中提供设备安全边距的直观预览
-- ⚙️ **自定义设置**: 支持自定义安全边距数值
-- 🚀 **CSS变量注入**: 自动向网页注入`--safe-area-inset-*`CSS变量
-- 👀 **调试模式**: 可选的可视化调试覆盖层
-- 💾 **状态保持**: 自动保存设置，重新打开页面时保持当前配置
+### 📱 设备支持
+- **20+ 主流设备**: iPhone、Android、iPad 等多种设备型号
+- **真实硬件特征**: 刘海、动态岛、打孔屏、Home 指示器精确模拟
+- **自定义配置**: 支持自定义安全边距值
 
-## 支持的设备
+### 🎨 视觉效果
+- **真实设备外观**: 精确还原各品牌设备的外观和颜色
+- **可视化控制**: 实时切换安全边距和内容显示区域
+- **横竖屏支持**: 完整的设备方向模拟
 
-### iPhone系列
-- iPhone 15 Pro Max / Pro / 15
-- iPhone 14 Pro Max / Pro / 14
-- iPhone 13 Pro Max / Pro / 13 / Mini
-- iPhone 12 Pro Max / 12 Pro / 12 / Mini
-- iPhone XR / 11
-- iPhone X / XS
+### 💻 开发体验
+- **TypeScript 支持**: 完整的类型安全和开发体验
+- **现代构建系统**: 基于 Vite 的高性能构建
+- **实时预览**: 支持开发模式下的实时重载
 
-### Android设备
-- Samsung Galaxy S22 / S21
-- Google Pixel 4 / 3 XL / XL
+## 🚀 快速开始
 
-### 横屏模式
-- iPhone 14 Pro (Landscape)
-- iPhone 14 (Landscape)
+### 环境要求
+- Node.js 16+
+- npm 7+
+- Chrome 浏览器
 
-## 安装方法
+### 安装和构建
 
-### 开发模式安装
-
-1. 下载或克隆此项目到本地
 ```bash
-git clone <repository-url>
+# 克隆项目
+git clone https://github.com/username/chrome-safe-area-plugin.git
 cd chrome-safe-area-plugin
+
+# 安装依赖
+npm install
+
+# 构建扩展
+npm run build
 ```
 
-2. 打开Chrome浏览器，访问 `chrome://extensions/`
+### 加载到 Chrome
 
-3. 开启"开发者模式"（页面右上角）
+1. 打开 Chrome 浏览器，访问 `chrome://extensions/`
+2. 启用"开发者模式"
+3. 点击"加载已解压的扩展程序"
+4. 选择项目中的 `dist` 文件夹
 
-4. 点击"加载已解压的扩展程序"
+详细安装说明请参考 [INSTALLATION.md](./INSTALLATION.md)
 
-5. 选择项目文件夹
+## 🔧 开发
 
-6. 插件安装完成，会在扩展程序栏显示插件图标
+### 开发命令
 
-## 使用方法
+```bash
+# 开发模式（构建 + 监听）
+npm run dev
 
-### 基本使用
+# 仅监听模式
+npm run dev:watch
 
-1. **开启插件**: 点击插件图标，在弹窗中开启"Enable"开关
+# 类型检查
+npm run type-check
 
-2. **选择设备**: 从下拉菜单中选择要模拟的设备型号
+# 代码检查
+npm run lint
 
-3. **查看效果**: 安全边距会立即应用到当前网页
+# 修复代码问题
+npm run lint:fix
 
-4. **切换设备**: 随时可以切换到其他设备型号
+# 完整验证
+npm run validate
 
-### 自定义安全边距
-
-1. 在插件弹窗中展开"Custom Safe Area"部分
-
-2. 输入自定义的安全边距数值（单位：像素）
-
-3. 点击"Apply Custom"按钮应用设置
-
-### CSS开发集成
-
-插件会自动向网页注入以下CSS变量：
-
-```css
-:root {
-  --safe-area-inset-top: 59px;
-  --safe-area-inset-bottom: 34px;
-  --safe-area-inset-left: 0px;
-  --safe-area-inset-right: 0px;
-}
+# 清理构建
+npm run clean
 ```
-
-### 在CSS中使用
-
-```css
-/* 使用CSS变量 */
-.header {
-  padding-top: var(--safe-area-inset-top);
-}
-
-.footer {
-  padding-bottom: var(--safe-area-inset-bottom);
-}
-
-/* 使用工具类（插件会自动注入） */
-.safe-area-container {
-  @apply safe-area-inset-all;
-}
-
-/* 兼容原生env()函数 */
-.container {
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) 
-           env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-```
-
-### JavaScript事件监听
-
-插件会触发自定义事件，方便JavaScript代码响应安全边距变化：
-
-```javascript
-document.addEventListener('safeAreaInsetsChanged', (event) => {
-  const { top, bottom, left, right, enabled } = event.detail;
-  console.log('Safe area insets changed:', { top, bottom, left, right, enabled });
-  
-  // 执行自定义逻辑
-  updateLayout(top, bottom, left, right);
-});
-```
-
-## 工具类
-
-插件提供了便用的CSS工具类：
-
-```css
-/* 单独设置某一边的安全边距 */
-.safe-area-inset-top
-.safe-area-inset-bottom
-.safe-area-inset-left
-.safe-area-inset-right
-
-/* 设置所有边的安全边距 */
-.safe-area-inset-all
-```
-
-## 调试功能
-
-插件提供可视化调试功能：
-
-- **调试覆盖层**: 当启用安全边距时，会显示半透明的红色区域标识安全边距
-- **控制台日志**: 在浏览器控制台中查看安全边距变化日志
-- **设备预览**: 插件弹窗中的小型设备预览图
-
-## 技术原理
-
-1. **CSS变量注入**: 通过Content Script向页面动态注入CSS变量
-2. **实时通信**: Popup与Content Script通过Chrome消息API实时通信
-3. **状态管理**: 使用Chrome Storage API保存用户设置
-4. **样式覆盖**: 通过动态样式表覆盖网页的安全边距设置
-
-## 浏览器兼容性
-
-- Chrome 88+
-- 基于Chromium的浏览器（Edge、Opera等）
-
-## 开发
 
 ### 项目结构
 
 ```
 chrome-safe-area-plugin/
-├── manifest.json          # 插件配置文件
-├── popup.html             # 插件弹窗HTML
-├── popup.css              # 插件弹窗样式
-├── popup.js               # 插件弹窗逻辑
-├── content.js             # 内容脚本
-├── background.js          # 后台脚本
-├── devices.js             # 设备配置数据
-├── icons/                 # 插件图标
-└── README.md              # 项目说明
+├── src/                    # TypeScript 源代码
+│   ├── background.ts       # Service Worker
+│   ├── content.ts          # Content Script
+│   ├── popup.ts           # Popup 脚本
+│   ├── devices.ts         # 设备配置
+│   ├── phone-*.ts         # 设备渲染组件
+│   └── manifest.json      # 扩展清单
+├── icons/                 # 图标资源
+├── dist/                  # 构建输出
+├── scripts/               # 构建脚本
+├── types/                 # TypeScript 类型定义
+├── popup.html            # Popup HTML
+├── popup.css             # Popup 样式
+├── vite.config.ts        # Vite 配置
+├── tsconfig.json         # TypeScript 配置
+└── .eslintrc.json        # ESLint 配置
 ```
 
-### 修改设备数据
+## 📚 文档
 
-在`devices.js`文件中添加新的设备配置：
+- [安装指南](./INSTALLATION.md) - 详细的安装和使用说明
+- [构建系统](./BUILD_SYSTEM.md) - 构建系统架构和规范
+- [功能更新](./FEATURE_UPDATE.md) - 最新功能介绍
+- [快速开始](./QUICKSTART.md) - 快速上手指南
+- [TypeScript 迁移](./TYPESCRIPT_MIGRATION.md) - TypeScript 迁移说明
 
-```javascript
-newDevice: {
-  name: "设备名称",
-  safeAreaInsets: {
-    top: 顶部边距,
-    bottom: 底部边距,
-    left: 左侧边距,
-    right: 右侧边距
-  }
-}
-```
+## 🎯 使用方法
 
-## 常见问题
+1. **启动扩展**: 点击浏览器工具栏中的扩展图标
+2. **选择设备**: 从下拉菜单选择要模拟的设备
+3. **启用模拟**: 切换开关启用安全边距模拟
+4. **查看效果**: 页面将显示对应的安全边距效果
 
-**Q: 为什么安全边距没有生效？**
-A: 确保插件已开启，并且当前网页支持CSS变量。某些网站可能有CSP限制。
+### 支持的设备
 
-**Q: 可以同时模拟多个设备吗？**
-A: 目前每次只能模拟一个设备的安全边距。
+#### iPhone 系列
+- iPhone 15 Pro Max/Pro/Plus/15 (动态岛)
+- iPhone 14 Pro Max/Pro/Plus/14 (动态岛/刘海)
+- iPhone 13 Pro Max/Pro/mini/13 (刘海)
+- iPhone 12 Pro Max/Pro/mini/12 (刘海)
+- iPhone 11 Pro Max/Pro/11 (刘海)
+- iPhone XS Max/XS/XR/X (刘海)
 
-**Q: 横屏和竖屏的安全边距有什么区别？**
-A: 横屏时通常顶部和底部边距较小，左右边距较大（刘海屏设备）。
+#### Android 系列
+- Google Pixel 7 Pro/7/6 Pro/6 (打孔屏)
+- Samsung Galaxy S23/S22/S21 系列 (打孔屏)
+- OnePlus 9 Pro/9 (打孔屏)
 
-**Q: 如何在React/Vue项目中使用？**
-A: 直接使用CSS变量或监听`safeAreaInsetsChanged`事件来响应变化。
+#### 平板设备
+- iPad Pro 12.9"/11" (圆角屏幕)
+- iPad Air (圆角屏幕)
 
-## 许可证
+## 🛠️ 构建系统
 
-MIT License
+项目使用现代化的构建系统：
 
-## 贡献
+- **Vite**: 快速的现代前端构建工具
+- **TypeScript**: 类型安全的 JavaScript 超集
+- **ESLint**: 代码质量检查
+- **自动化流程**: 集成类型检查、代码检查和构建
 
-欢迎提交Issue和Pull Request来改进这个项目！
+详细信息请参考 [BUILD_SYSTEM.md](./BUILD_SYSTEM.md)
+
+## 🔧 技术栈
+
+- **语言**: TypeScript 5.x
+- **构建工具**: Vite 5.x
+- **包管理**: npm
+- **代码检查**: ESLint + TypeScript ESLint
+- **API**: Chrome Extension Manifest V3
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE](./LICENSE) 文件
 
 ---
 
-**注意**: 此插件仅用于开发测试目的，不会影响移动设备上的实际安全边距行为。 
+**🎉 享受使用 Chrome Safe Area Plugin 进行移动端开发！** 

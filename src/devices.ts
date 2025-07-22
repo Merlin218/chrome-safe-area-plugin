@@ -1,5 +1,7 @@
 // Device safe area insets configuration with physical appearance
-const DEVICES = {
+import type { DevicesCollection } from '../types/global.js';
+
+const DEVICES: DevicesCollection = {
   none: {
     name: "None (Default)",
     safeAreaInsets: {
@@ -9,6 +11,18 @@ const DEVICES = {
       right: 0
     },
     appearance: {
+      width: 0,
+      height: 0,
+      screenWidth: 0,
+      screenHeight: 0,
+      borderRadius: 0,
+      screenRadius: 0,
+      notch: {
+        type: "none"
+      },
+      homeIndicator: null,
+      colors: [],
+      brand: "custom",
       show: false
     }
   },
@@ -683,6 +697,4 @@ const DEVICES = {
 };
 
 // Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = DEVICES;
-} 
+export default DEVICES; 
