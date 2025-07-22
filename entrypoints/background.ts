@@ -1,7 +1,11 @@
-// Background script for Safe Area Simulator
-/// <reference types="chrome" />
 import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets } from '../types/global.js';
-import { getDeviceInsets, sendMessageToTab, isValidTabUrl } from './shared/utils.js';
+import { getDeviceInsets, sendMessageToTab, isValidTabUrl } from '../src/shared/utils.js';
+
+export default defineBackground(() => {
+  console.log('Background script initialized');
+
+  const background = new SafeAreaBackground();
+});
 
 class SafeAreaBackground {
   constructor() {
@@ -143,6 +147,3 @@ class SafeAreaBackground {
     }
   }
 }
-
-// Initialize background script
-new SafeAreaBackground(); 

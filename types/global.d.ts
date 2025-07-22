@@ -18,6 +18,43 @@ interface DeviceNotch {
   height?: number;
   radius?: number;
   position?: 'center-top' | 'left' | 'right';
+  // Enhanced properties for realistic rendering
+  color?: string;
+  shadow?: boolean;
+  borderRadius?: string;
+}
+
+// Hardware regions for realistic device simulation
+interface HardwareRegion {
+  type: 'notch' | 'dynamic-island' | 'status-bar' | 'navigation-bar' | 'home-indicator' | 'camera-cutout';
+  position: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  style: {
+    backgroundColor?: string;
+    borderRadius?: string;
+    boxShadow?: string;
+    opacity?: number;
+    zIndex?: number;
+  };
+  content?: {
+    type?: 'sensors' | 'camera' | 'speaker';
+    elements?: Array<{
+      type: 'dot' | 'line' | 'rect' | 'circle' | 'text';
+      x: number;
+      y: number;
+      width?: number;
+      height?: number;
+      radius?: number;
+      color?: string;
+      content?: string;
+      borderRadius?: string;
+      id?: string;
+    }>;
+  };
 }
 
 // Device home indicator configuration
@@ -57,6 +94,8 @@ interface DeviceAppearance {
   orientation?: 'portrait' | 'landscape';
   frameImage?: DeviceFrameImage;
   show?: boolean;
+  // Enhanced hardware regions for realistic rendering
+  hardwareRegions?: HardwareRegion[];
 }
 
 // Device configuration interface
@@ -88,6 +127,7 @@ interface SafeAreaSettings {
   customInsets: SafeAreaInsets;
   showDebugOverlay: boolean;
   showDeviceFrame?: boolean;
+  showHardwareRegions?: boolean;
   mockupOptions?: MockupOptions;
 }
 
@@ -140,5 +180,6 @@ export {
   SafeAreaSettings,
   MockupOptions,
   PhoneFrameOptions,
-  SafeAreaChangeEvent
+  SafeAreaChangeEvent,
+  HardwareRegion
 }; 

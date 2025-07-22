@@ -1,7 +1,7 @@
 // Device safe area insets configuration with physical appearance
-import type { DevicesCollection } from '../types/global.js';
+import type { DevicesCollection } from '../../types/global.js';
 
-const DEVICES: DevicesCollection = {
+export const DEVICES: DevicesCollection = {
   none: {
     name: "None (Default)",
     safeAreaInsets: {
@@ -37,8 +37,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 146.7,
       height: 284,
-      screenWidth: 130,
-      screenHeight: 260,
+      screenWidth: 390,
+      screenHeight: 844,
       borderRadius: 20,
       screenRadius: 16,
       notch: {
@@ -52,7 +52,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#1f1f1f", "#2d2d2d", "#3a3a3a"], // Space Black gradient
+      colors: ["#1f1f1f", "#2d2d2d", "#3a3a3a"],
       brand: "apple"
     }
   },
@@ -67,22 +67,25 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 147.5,
       height: 285,
-      screenWidth: 131,
-      screenHeight: 261,
+      screenWidth: 393,
+      screenHeight: 852,
       borderRadius: 20,
       screenRadius: 16,
       notch: {
         type: "dynamic-island",
         width: 32,
         height: 8,
-        radius: 4
+        radius: 4,
+        color: "#000000",
+        shadow: true,
+        borderRadius: "4px"
       },
       homeIndicator: {
         width: 36,
         height: 2,
         radius: 1
       },
-      colors: ["#2c2c2e", "#3a3a3c", "#48484a"], // Deep Purple
+      colors: ["#2c2c2e", "#3a3a3c", "#48484a"],
       brand: "apple",
       frameImage: {
         light: "iphone14-pro-light.png",
@@ -90,7 +93,92 @@ const DEVICES: DevicesCollection = {
         hasDynamicIsland: true,
         hasHomeIndicator: true,
         screenOffset: { x: 8.25, y: 12, width: 131, height: 261 }
-      }
+      },
+      hardwareRegions: [
+        {
+          type: "dynamic-island",
+          position: { x: 133, y: 10, width: 126, height: 30 },
+          style: {
+            backgroundColor: "#000000",
+            borderRadius: "15px",
+            boxShadow: "inset 0 1px 3px rgba(255,255,255,0.1), 0 1px 6px rgba(0,0,0,0.4)",
+            opacity: 0.98,
+            zIndex: 1000001
+          },
+          content: {
+            type: "sensors",
+            elements: [
+              {
+                type: "circle",
+                x: 35,
+                y: 15,
+                radius: 5,
+                color: "#1a1a1a"
+              },
+              {
+                type: "circle",
+                x: 55,
+                y: 15,
+                radius: 3,
+                color: "#2a2a2a"
+              },
+              {
+                type: "rect",
+                x: 70,
+                y: 12,
+                width: 20,
+                height: 6,
+                color: "#333333"
+              }
+            ]
+          }
+        },
+        {
+          type: "status-bar",
+          position: { x: 8, y: 5, width: 50, height: 20 },
+          style: {
+            opacity: 0,
+            zIndex: 1000000
+          },
+          content: {
+            elements: [
+              { type: "circle", x: 10, y: 10, radius: 2, color: "#ffffff" },
+              { type: "circle", x: 18, y: 10, radius: 2, color: "#ffffff" },
+              { type: "circle", x: 26, y: 10, radius: 2, color: "#ffffff" }
+            ]
+          }
+        },
+        {
+          type: "status-bar",
+          position: { x: 190, y: 5, width: 50, height: 20 },
+          style: {
+            opacity: 0,
+            zIndex: 1000000
+          },
+          content: {
+            elements: [
+              {
+                type: "rect",
+                x: 25,
+                y: 8,
+                width: 20,
+                height: 10,
+                color: "rgba(255,255,255,0.8)"
+              }
+            ]
+          }
+        },
+        {
+          type: "home-indicator",
+          position: { x: 0, y: 0, width: 134, height: 5 },
+          style: {
+            backgroundColor: "rgba(255, 255, 255, 0.6)",
+            borderRadius: "2.5px",
+            opacity: 0.8,
+            zIndex: 1000001
+          }
+        }
+      ]
     }
   },
   iphone14ProMax: {
@@ -104,8 +192,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 160.7,
       height: 310,
-      screenWidth: 144,
-      screenHeight: 286,
+      screenWidth: 430,
+      screenHeight: 932,
       borderRadius: 22,
       screenRadius: 18,
       notch: {
@@ -179,7 +267,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#ff6b6b", "#ff8e8e", "#ffb3b3"], // Product RED
+      colors: ["#ff6b6b", "#ff8e8e", "#ffb3b3"],
       brand: "apple"
     }
   },
@@ -194,8 +282,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 146.7,
       height: 284,
-      screenWidth: 130,
-      screenHeight: 260,
+      screenWidth: 390,
+      screenHeight: 844,
       borderRadius: 19,
       screenRadius: 15,
       notch: {
@@ -209,7 +297,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#4a90e2", "#5ba0f2", "#6cb0ff"], // Pacific Blue
+      colors: ["#4a90e2", "#5ba0f2", "#6cb0ff"],
       brand: "apple"
     }
   },
@@ -224,8 +312,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 131.5,
       height: 255,
-      screenWidth: 115,
-      screenHeight: 231,
+      screenWidth: 375,
+      screenHeight: 812,
       borderRadius: 17,
       screenRadius: 13,
       notch: {
@@ -239,7 +327,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#50e3c2", "#70f3d2", "#90ffe2"], // Green
+      colors: ["#50e3c2", "#70f3d2", "#90ffe2"],
       brand: "apple"
     }
   },
@@ -254,8 +342,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 160.8,
       height: 310,
-      screenWidth: 144,
-      screenHeight: 286,
+      screenWidth: 428,
+      screenHeight: 926,
       borderRadius: 22,
       screenRadius: 18,
       notch: {
@@ -269,7 +357,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#c9b037", "#d4c547", "#dfda57"], // Gold
+      colors: ["#c9b037", "#d4c547", "#dfda57"],
       brand: "apple"
     }
   },
@@ -284,8 +372,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 146.7,
       height: 284,
-      screenWidth: 130,
-      screenHeight: 260,
+      screenWidth: 390,
+      screenHeight: 844,
       borderRadius: 19,
       screenRadius: 15,
       notch: {
@@ -299,7 +387,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#ffc0cb", "#ffd0db", "#ffe0eb"], // Pink
+      colors: ["#ffc0cb", "#ffd0db", "#ffe0eb"],
       brand: "apple"
     }
   },
@@ -314,8 +402,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 131.5,
       height: 255,
-      screenWidth: 115,
-      screenHeight: 231,
+      screenWidth: 375,
+      screenHeight: 812,
       borderRadius: 17,
       screenRadius: 13,
       notch: {
@@ -329,7 +417,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#4169e1", "#5179f1", "#6189ff"], // Blue
+      colors: ["#4169e1", "#5179f1", "#6189ff"],
       brand: "apple"
     }
   },
@@ -344,8 +432,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 147.5,
       height: 285,
-      screenWidth: 131,
-      screenHeight: 261,
+      screenWidth: 390,
+      screenHeight: 844,
       borderRadius: 20,
       screenRadius: 16,
       notch: {
@@ -359,7 +447,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#2c2c2e", "#3a3a3c", "#48484a"], // Graphite
+      colors: ["#2c2c2e", "#3a3a3c", "#48484a"],
       brand: "apple"
     }
   },
@@ -374,8 +462,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 160.8,
       height: 310,
-      screenWidth: 144,
-      screenHeight: 286,
+      screenWidth: 428,
+      screenHeight: 926,
       borderRadius: 22,
       screenRadius: 18,
       notch: {
@@ -389,7 +477,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#a7c0cd", "#b7d0dd", "#c7e0ed"], // Sierra Blue
+      colors: ["#a7c0cd", "#b7d0dd", "#c7e0ed"],
       brand: "apple"
     }
   },
@@ -404,8 +492,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 147.6,
       height: 285,
-      screenWidth: 131,
-      screenHeight: 261,
+      screenWidth: 390,
+      screenHeight: 844,
       borderRadius: 20,
       screenRadius: 16,
       notch: {
@@ -419,7 +507,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#ffb3d9", "#ffc3e3", "#ffd3ed"], // Pink
+      colors: ["#ffb3d9", "#ffc3e3", "#ffd3ed"],
       brand: "apple"
     }
   },
@@ -434,8 +522,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 146.6,
       height: 284,
-      screenWidth: 130,
-      screenHeight: 260,
+      screenWidth: 393,
+      screenHeight: 852,
       borderRadius: 20,
       screenRadius: 16,
       notch: {
@@ -449,7 +537,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#d4af37", "#e4bf47", "#f4cf57"], // Natural Titanium
+      colors: ["#d4af37", "#e4bf47", "#f4cf57"],
       brand: "apple"
     }
   },
@@ -464,8 +552,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 159.9,
       height: 309,
-      screenWidth: 143,
-      screenHeight: 285,
+      screenWidth: 430,
+      screenHeight: 932,
       borderRadius: 22,
       screenRadius: 18,
       notch: {
@@ -479,7 +567,7 @@ const DEVICES: DevicesCollection = {
         height: 2,
         radius: 1
       },
-      colors: ["#708090", "#8090a0", "#90a0b0"], // Blue Titanium
+      colors: ["#708090", "#8090a0", "#90a0b0"],
       brand: "apple",
       frameImage: {
         light: "iphone15-promax-light.png",
@@ -510,7 +598,7 @@ const DEVICES: DevicesCollection = {
         type: "none"
       },
       homeIndicator: null,
-      colors: ["#34495e", "#4a6275", "#607a8c"], // Quite Black
+      colors: ["#34495e", "#4a6275", "#607a8c"],
       brand: "google"
     }
   },
@@ -536,7 +624,7 @@ const DEVICES: DevicesCollection = {
         radius: 3
       },
       homeIndicator: null,
-      colors: ["#1a1a1a", "#2a2a2a", "#3a3a3a"], // Just Black
+      colors: ["#1a1a1a", "#2a2a2a", "#3a3a3a"],
       brand: "google"
     }
   },
@@ -562,7 +650,7 @@ const DEVICES: DevicesCollection = {
         radius: 0
       },
       homeIndicator: null,
-      colors: ["#ffffff", "#f5f5f5", "#ebebeb"], // Clearly White
+      colors: ["#ffffff", "#f5f5f5", "#ebebeb"],
       brand: "google"
     }
   },
@@ -589,7 +677,7 @@ const DEVICES: DevicesCollection = {
         position: "center-top"
       },
       homeIndicator: null,
-      colors: ["#9b59b6", "#ae6fc6", "#c185d6"], // Phantom Violet
+      colors: ["#9b59b6", "#ae6fc6", "#c185d6"],
       brand: "samsung"
     }
   },
@@ -604,8 +692,8 @@ const DEVICES: DevicesCollection = {
     appearance: {
       width: 146,
       height: 285,
-      screenWidth: 130,
-      screenHeight: 261,
+      screenWidth: 360,
+      screenHeight: 780,
       borderRadius: 16,
       screenRadius: 12,
       notch: {
@@ -613,10 +701,12 @@ const DEVICES: DevicesCollection = {
         width: 8,
         height: 8,
         radius: 4,
-        position: "center-top"
+        position: "center-top",
+        color: "#000000",
+        shadow: true
       },
       homeIndicator: null,
-      colors: ["#2ecc71", "#4ed681", "#6ee091"], // Phantom Green
+      colors: ["#2ecc71", "#4ed681", "#6ee091"],
       brand: "samsung",
       frameImage: {
         light: "samsung-s22-light.png",
@@ -624,7 +714,109 @@ const DEVICES: DevicesCollection = {
         hasDynamicIsland: false,
         hasHomeIndicator: false,
         screenOffset: { x: 8, y: 12, width: 130, height: 261 }
-      }
+      },
+      hardwareRegions: [
+        {
+          type: "camera-cutout",
+          position: { x: 168, y: 15, width: 24, height: 24 },
+          style: {
+            backgroundColor: "#000000",
+            borderRadius: "50%",
+            boxShadow: "0 0 8px rgba(0,0,0,0.6), inset 0 1px 3px rgba(255,255,255,0.1)",
+            opacity: 0.98,
+            zIndex: 1000001
+          },
+          content: {
+            type: "camera",
+            elements: [
+              {
+                type: "circle",
+                x: 12,
+                y: 12,
+                radius: 8,
+                color: "#1a1a1a"
+              },
+              {
+                type: "circle",
+                x: 12,
+                y: 12,
+                radius: 4,
+                color: "#333333"
+              }
+            ]
+          }
+        },
+        {
+          type: "status-bar",
+          position: { x: 8, y: 5, width: 110, height: 20 },
+          style: {
+            opacity: 0,
+            zIndex: 1000000
+          },
+          content: {
+            elements: [
+              { type: "circle", x: 10, y: 10, radius: 2, color: "#ffffff" },
+              { type: "circle", x: 18, y: 10, radius: 2, color: "#ffffff" },
+              { type: "circle", x: 26, y: 10, radius: 2, color: "#ffffff" }
+            ]
+          }
+        },
+        {
+          type: "status-bar",
+          position: { x: 150, y: 5, width: 80, height: 20 },
+          style: {
+            opacity: 0,
+            zIndex: 1000000
+          },
+          content: {
+            elements: [
+              {
+                type: "rect",
+                x: 50,
+                y: 8,
+                width: 20,
+                height: 10,
+                color: "rgba(255,255,255,0.8)"
+              }
+            ]
+          }
+        },
+        {
+          type: "navigation-bar",
+          position: { x: 0, y: 0, width: 130, height: 48 },
+          style: {
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            opacity: 0.6,
+            zIndex: 1000000
+          },
+          content: {
+            elements: [
+              {
+                type: "circle",
+                x: 32,
+                y: 24,
+                radius: 6,
+                color: "rgba(255,255,255,0.7)"
+              },
+              {
+                type: "circle",
+                x: 65,
+                y: 24,
+                radius: 8,
+                color: "rgba(255,255,255,0.7)"
+              },
+              {
+                type: "rect",
+                x: 90,
+                y: 20,
+                width: 16,
+                height: 8,
+                color: "rgba(255,255,255,0.7)"
+              }
+            ]
+          }
+        }
+      ]
     }
   },
   // Landscape orientation variations
@@ -696,5 +888,4 @@ const DEVICES: DevicesCollection = {
   }
 };
 
-// Export for module systems
-export default DEVICES; 
+export default DEVICES;

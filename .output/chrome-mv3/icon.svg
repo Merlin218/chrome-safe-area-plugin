@@ -1,0 +1,36 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="128" height="128" rx="16" fill="#667eea" />
+
+    <!-- Phone outline -->
+    <rect x="24" y="16" width="80" height="96" rx="12" fill="none" stroke="white" stroke-width="3" />
+
+    <!-- Screen area -->
+    <rect x="32" y="28" width="64" height="72" rx="4" fill="rgba(255,255,255,0.2)" />
+
+    <!-- Safe area indicators (top) -->
+    <rect x="32" y="28" width="64" height="8" fill="#ff3b30" opacity="0.8" />
+    <text x="64" y="34" text-anchor="middle" fill="white" font-size="6" font-family="Arial">TOP</text>
+
+    <!-- Safe area indicators (bottom) -->
+    <rect x="32" y="92" width="64" height="8" fill="#ff3b30" opacity="0.8" />
+    <text x="64" y="98" text-anchor="middle" fill="white" font-size="6" font-family="Arial">BOTTOM</text>
+
+    <!-- Safe area indicators (sides) -->
+    <rect x="32" y="36" width="4" height="56" fill="#ff3b30" opacity="0.6" />
+    <rect x="92" y="36" width="4" height="56" fill="#ff3b30" opacity="0.6" />
+
+    <!-- Center content area -->
+    <rect x="40" y="44" width="48" height="36" rx="2" fill="rgba(255,255,255,0.9)" />
+    <text x="64" y="58" text-anchor="middle" fill="#333" font-size="8" font-family="Arial"
+        font-weight="bold">SAFE</text>
+    <text x="64" y="68" text-anchor="middle" fill="#333" font-size="8" font-family="Arial"
+        font-weight="bold">AREA</text>
+    <text x="64" y="76" text-anchor="middle" fill="#667eea" font-size="6" font-family="Arial">SIMULATOR</text>
+
+    <!-- Corner indicators -->
+    <circle cx="40" cy="36" r="2" fill="#00d4aa" />
+    <circle cx="88" cy="36" r="2" fill="#00d4aa" />
+    <circle cx="40" cy="92" r="2" fill="#00d4aa" />
+    <circle cx="88" cy="92" r="2" fill="#00d4aa" />
+</svg>

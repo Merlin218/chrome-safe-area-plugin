@@ -1,9 +1,23 @@
-// Content script for Safe Area Simulator
-/// <reference types="chrome" />
 import type { SafeAreaInsets, SafeAreaMessage } from '../types/global.js';
-import { DEVICES } from './shared/devices.js';
-import { createSafeAreaCSS, BASE_SAFE_AREA_STYLES, createSafeAreaEvent, debounce } from './shared/utils.js';
-import { PhoneFrameSimple } from './phone-frame-simple.js';
+import { DEVICES } from '../src/shared/devices.js';
+import { createSafeAreaCSS, BASE_SAFE_AREA_STYLES, createSafeAreaEvent, debounce } from '../src/shared/utils.js';
+import { PhoneFrameSimple } from '../src/phone-frame-simple.js';
+import { HardwareRegionsRenderer } from '../src/hardware-renderer.js';
+
+export default defineContentScript({
+  matches: ['<all_urls>'],
+  runAt: 'document_start',
+  main(ctx) {
+    console.log('Content script initialized');
+    
+    const injector = new SafeAreaInjector();
+    
+    // Clean up when the content script is invalidated
+    ctx.onInvalidated(() => {
+      injector.handleExtensionDisable();
+    });
+  }
+});
 
 class SafeAreaInjector {
   private isEnabled: boolean = false;
@@ -11,7 +25,9 @@ class SafeAreaInjector {
   private currentInsets: SafeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 };
   private styleElement: HTMLStyleElement | null = null;
   private phoneFrameOverlay: PhoneFrameSimple | null = null;
+  private hardwareRenderer: HardwareRegionsRenderer | null = null;
   private debugMode: boolean = false;
+  private showHardwareRegions: boolean = false;
   private observer: MutationObserver | null = null;
   private routeChangeTimeout: number | null = null;
   private debugOverlayObserver: MutationObserver | null = null;
@@ -22,20 +38,38 @@ class SafeAreaInjector {
   }
 
   private init(): void {
-    this.loadStoredState();
-    this.createStyleElement();
+    // Setup message listener immediately
     this.setupMessageListener();
-    this.injectInitialStyles();
-    this.createPhoneFrameOverlay();
-    this.setupRouteObserver();
+    
+    // Wait for DOM to be ready for other operations
+    this.waitForDOM(() => {
+      this.loadStoredState();
+      this.createStyleElement();
+      this.injectInitialStyles();
+      this.createPhoneFrameOverlay();
+      this.createHardwareRenderer();
+      this.setupRouteObserver();
+    });
+  }
+
+  private waitForDOM(callback: () => void): void {
+    if (document.head && document.body) {
+      callback();
+    } else if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', callback);
+    } else {
+      // DOM is ready but head/body might not be fully constructed
+      setTimeout(() => this.waitForDOM(callback), 10);
+    }
   }
 
   private async loadStoredState(): Promise<void> {
     try {
-      const result = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDeviceFrame', 'debugMode']);
+      const result = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDeviceFrame', 'showHardwareRegions', 'debugMode']);
       this.isEnabled = result.enabled || false;
       this.currentDevice = result.device || null;
       this.debugMode = result.debugMode || false;
+      this.showHardwareRegions = result.showHardwareRegions !== false; // Default to true
       
       if (this.isEnabled && result.device && DEVICES[result.device]) {
         const device = DEVICES[result.device];
@@ -64,6 +98,19 @@ class SafeAreaInjector {
       });
     } catch (error) {
       console.error('[Safe Area Simulator] Error creating phone frame overlay:', error);
+    }
+  }
+
+  private createHardwareRenderer(): void {
+    try {
+      // Clean up existing hardware renderer if it exists
+      if (this.hardwareRenderer) {
+        this.hardwareRenderer.destroy();
+      }
+      this.hardwareRenderer = new HardwareRegionsRenderer();
+      console.log('[Safe Area Simulator] Hardware regions renderer initialized');
+    } catch (error) {
+      console.error('[Safe Area Simulator] Error creating hardware renderer:', error);
     }
   }
 
@@ -312,6 +359,14 @@ class SafeAreaInjector {
     this.createPhoneFrameOverlay();
     this.updatePhoneFrame();
     
+    // Recreate hardware renderer
+    if (this.hardwareRenderer) {
+      this.hardwareRenderer.destroy();
+      this.hardwareRenderer = null;
+    }
+    this.createHardwareRenderer();
+    this.updateHardwareRegions();
+    
     // Also recreate debug overlay if needed
     this.updateDebugOverlay();
   }
@@ -338,8 +393,15 @@ class SafeAreaInjector {
           chrome.storage.sync.set({ showDeviceFrame: message.showDeviceFrame });
         }
         
+        // Handle hardware regions setting
+        if (message.settings?.showHardwareRegions !== undefined) {
+          this.showHardwareRegions = message.settings.showHardwareRegions;
+          chrome.storage.sync.set({ showHardwareRegions: this.showHardwareRegions });
+        }
+        
         this.updateStyles();
         this.updatePhoneFrame();
+        this.updateHardwareRegions();
         sendResponse({ success: true });
       }
       return true;
@@ -450,6 +512,9 @@ html {
     // Update phone frame overlay
     this.updatePhoneFrame();
 
+    // Update hardware regions
+    this.updateHardwareRegions();
+
     // Dispatch custom event for websites that want to listen for safe area changes
     const event = new CustomEvent('safeAreaInsetsChanged', {
       detail: {
@@ -467,6 +532,24 @@ html {
       console.log(`[Safe Area Simulator] Applied insets: top=${top}px, bottom=${bottom}px, left=${left}px, right=${right}px`);
     } else {
       console.log('[Safe Area Simulator] Disabled - insets reset to 0');
+    }
+  }
+
+  private updateHardwareRegions(): void {
+    if (!this.hardwareRenderer) return;
+    
+    try {
+      // Set visibility based on enabled state and showHardwareRegions setting
+      const shouldShow = this.isEnabled && this.showHardwareRegions && this.currentDevice;
+      this.hardwareRenderer.setVisible(shouldShow);
+      
+      if (shouldShow && this.currentDevice && DEVICES[this.currentDevice]) {
+        const device = DEVICES[this.currentDevice];
+        this.hardwareRenderer.updateDevice(device);
+        console.log(`[Safe Area Simulator] Updated hardware regions for ${device.name}`);
+      }
+    } catch (error) {
+      console.error('[Safe Area Simulator] Error updating hardware regions:', error);
     }
   }
 
@@ -494,6 +577,11 @@ html {
     if (this.phoneFrameOverlay) {
       this.phoneFrameOverlay.destroy();
       this.phoneFrameOverlay = null;
+    }
+    
+    if (this.hardwareRenderer) {
+      this.hardwareRenderer.destroy();
+      this.hardwareRenderer = null;
     }
     
     if (this.styleElement) {
@@ -653,12 +741,3 @@ html {
     }
   }
 }
-
-// Initialize the injector
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    new SafeAreaInjector();
-  });
-} else {
-  new SafeAreaInjector();
-} 

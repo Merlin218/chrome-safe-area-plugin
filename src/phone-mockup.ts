@@ -1,6 +1,6 @@
 // Phone Mockup Component for Safe Area Simulator
 import type { SafeAreaInsets, MockupOptions, Device, DeviceAppearance } from '../types/global.js';
-import DEVICES from './devices.js';
+import { DEVICES } from './shared/devices.js';
 
 class PhoneMockup {
   private container: HTMLElement;
@@ -397,4 +397,8 @@ class PhoneMockup {
       this.renderPhone({ top: 0, bottom: 0, left: 0, right: 0 });
     }
   }
-} 
+}
+
+// Export for module systems
+export { PhoneMockup };
+export default PhoneMockup; 

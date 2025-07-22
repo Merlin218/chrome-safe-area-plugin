@@ -1,9 +1,7 @@
-// Popup script for Safe Area Simulator
-/// <reference types="chrome" />
-import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets, MockupOptions } from '../types/global.js';
-import { DEVICES } from './shared/devices.js';
-import { sendMessageToTab, isValidTabUrl } from './shared/utils.js';
-import { PhoneMockup } from './phone-mockup.js';
+import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets, MockupOptions } from '../../types/global.js';
+import { DEVICES } from '../../src/shared/devices.js';
+import { sendMessageToTab, isValidTabUrl } from '../../src/shared/utils.js';
+import { PhoneMockup } from '../../src/phone-mockup.js';
 
 class SafeAreaPopup {
   private currentDevice: string = 'none';
@@ -15,6 +13,7 @@ class SafeAreaPopup {
     showContent: true
   };
   private showDeviceFrame: boolean = false;
+  private showHardwareRegions: boolean = true;
   
   constructor() {
     this.init();
@@ -30,12 +29,13 @@ class SafeAreaPopup {
 
   private async loadState(): Promise<void> {
     try {
-      const result = await chrome.storage.sync.get(['device', 'enabled', 'customInsets', 'mockupOptions', 'showDeviceFrame']);
+      const result = await chrome.storage.sync.get(['device', 'enabled', 'customInsets', 'mockupOptions', 'showDeviceFrame', 'showHardwareRegions']);
       this.currentDevice = result.device || 'none';
       this.isEnabled = result.enabled || false;
       this.customInsets = result.customInsets || { top: 0, bottom: 0, left: 0, right: 0 };
       this.mockupOptions = result.mockupOptions || { showSafeArea: true, showContent: true };
       this.showDeviceFrame = result.showDeviceFrame || false;
+      this.showHardwareRegions = result.showHardwareRegions !== false; // Default to true
     } catch (error) {
       console.error('Error loading state:', error);
     }
@@ -48,7 +48,8 @@ class SafeAreaPopup {
         enabled: this.isEnabled,
         customInsets: this.customInsets,
         mockupOptions: this.mockupOptions,
-        showDeviceFrame: this.showDeviceFrame
+        showDeviceFrame: this.showDeviceFrame,
+        showHardwareRegions: this.showHardwareRegions
       });
     } catch (error) {
       console.error('Error saving state:', error);
@@ -110,6 +111,7 @@ class SafeAreaPopup {
     const toggleSafeAreaBtn = document.getElementById('toggleSafeArea') as HTMLButtonElement;
     const toggleContentBtn = document.getElementById('toggleContent') as HTMLButtonElement;
     const toggleDeviceFrameBtn = document.getElementById('toggleDeviceFrame') as HTMLButtonElement;
+    const toggleHardwareRegionsBtn = document.getElementById('toggleHardwareRegions') as HTMLButtonElement;
     
     if (toggleSafeAreaBtn) {
       toggleSafeAreaBtn.addEventListener('click', this.handleToggleSafeArea.bind(this));
@@ -119,6 +121,9 @@ class SafeAreaPopup {
     }
     if (toggleDeviceFrameBtn) {
       toggleDeviceFrameBtn.addEventListener('click', this.handleToggleDeviceFrame.bind(this));
+    }
+    if (toggleHardwareRegionsBtn) {
+      toggleHardwareRegionsBtn.addEventListener('click', this.handleToggleHardwareRegions.bind(this));
     }
 
     // Update button states
@@ -230,18 +235,38 @@ class SafeAreaPopup {
     this.sendMessageToContentScript();
   }
 
+  private async handleToggleHardwareRegions(): Promise<void> {
+    this.showHardwareRegions = !this.showHardwareRegions;
+    await this.saveState();
+    this.updateMockupControls();
+    this.sendMessageToContentScript();
+  }
+
   private updateMockupControls(): void {
     const toggleSafeAreaBtn = document.getElementById('toggleSafeArea') as HTMLButtonElement;
     const toggleContentBtn = document.getElementById('toggleContent') as HTMLButtonElement;
     const toggleDeviceFrameBtn = document.getElementById('toggleDeviceFrame') as HTMLButtonElement;
+    const toggleHardwareRegionsBtn = document.getElementById('toggleHardwareRegions') as HTMLButtonElement;
     
-    toggleSafeAreaBtn.classList.toggle('active', this.mockupOptions.showSafeArea);
-    toggleContentBtn.classList.toggle('active', this.mockupOptions.showContent);
-    toggleDeviceFrameBtn.classList.toggle('active', this.showDeviceFrame);
+    if (toggleSafeAreaBtn) {
+      toggleSafeAreaBtn.classList.toggle('active', this.mockupOptions.showSafeArea);
+      toggleSafeAreaBtn.title = this.mockupOptions.showSafeArea ? 'Hide Safe Area' : 'Show Safe Area';
+    }
     
-    toggleSafeAreaBtn.title = this.mockupOptions.showSafeArea ? 'Hide Safe Area' : 'Show Safe Area';
-    toggleContentBtn.title = this.mockupOptions.showContent ? 'Hide Content' : 'Show Content';
-    toggleDeviceFrameBtn.title = this.showDeviceFrame ? 'Hide Device Frame' : 'Show Device Frame';
+    if (toggleContentBtn) {
+      toggleContentBtn.classList.toggle('active', this.mockupOptions.showContent);
+      toggleContentBtn.title = this.mockupOptions.showContent ? 'Hide Content' : 'Show Content';
+    }
+    
+    if (toggleDeviceFrameBtn) {
+      toggleDeviceFrameBtn.classList.toggle('active', this.showDeviceFrame);
+      toggleDeviceFrameBtn.title = this.showDeviceFrame ? 'Hide Device Frame' : 'Show Device Frame';
+    }
+    
+    if (toggleHardwareRegionsBtn) {
+      toggleHardwareRegionsBtn.classList.toggle('active', this.showHardwareRegions);
+      toggleHardwareRegionsBtn.title = this.showHardwareRegions ? 'Hide Hardware Regions' : 'Show Hardware Regions';
+    }
   }
 
   private updateUI(): void {
@@ -325,6 +350,15 @@ class SafeAreaPopup {
         enabled: this.isEnabled,
         device: this.currentDevice,
         showDeviceFrame: this.showDeviceFrame,
+        settings: {
+          enabled: this.isEnabled,
+          device: this.currentDevice,
+          customInsets: this.customInsets,
+          showDebugOverlay: true,
+          showDeviceFrame: this.showDeviceFrame,
+          showHardwareRegions: this.showHardwareRegions,
+          mockupOptions: this.mockupOptions
+        },
         insets: this.isEnabled && this.currentDevice && DEVICES[this.currentDevice] 
           ? DEVICES[this.currentDevice]!.safeAreaInsets 
           : { top: 0, bottom: 0, left: 0, right: 0 }
@@ -349,4 +383,4 @@ if (document.readyState === 'loading') {
   });
 } else {
   new SafeAreaPopup();
-} 
+}
