@@ -38,6 +38,9 @@ npm install
 
 # 构建扩展
 npm run build
+
+# 构建并打包（用于 Chrome Web Store 发布）
+npm run build:zip
 ```
 
 ### 加载到 Chrome

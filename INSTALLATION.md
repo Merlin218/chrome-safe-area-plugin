@@ -112,6 +112,31 @@ npm run dev
 npm run validate
 ```
 
+## 📦 创建发布包
+
+如果您需要创建用于分发的扩展包：
+
+```bash
+# 构建并创建 ZIP 包
+npm run build:zip
+
+# 或者仅基于现有构建创建 ZIP 包
+npm run package
+```
+
+### ZIP 包特性
+- **自动命名**: 包含版本号和时间戳
+- **最大压缩**: 优化文件大小
+- **集中管理**: 存放在 `packages/` 目录
+- **即用即发**: 可直接用于 Chrome Web Store 或企业分发
+
+### 发布用途
+生成的 ZIP 文件可以：
+- 手动分发给其他用户加载
+- 提交到 Chrome Web Store（需要开发者账号）
+- 在企业环境中批量部署
+- 作为版本备份存档
+
 ---
 
 *如有问题，请查看项目 README.md 或提交 Issue* 

@@ -29,6 +29,9 @@ build/
 *.pem
 *.zip
 
+# Package releases
+packages/
+
 # Legacy files (should not be committed)
 background.js
 content.js

@@ -1,6 +1,34 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import fs from 'fs';
+import archiver from 'archiver';
+
+// Function to create zip package
+async function createZipPackage(sourceDir: string, outputPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const output = fs.createWriteStream(outputPath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Maximum compression
+    });
+
+    output.on('close', () => {
+      const sizeInMB = (archive.pointer() / 1024 / 1024).toFixed(2);
+      console.log(`📦 Extension package created: ${outputPath}`);
+      console.log(`   Size: ${sizeInMB} MB (${archive.pointer()} bytes)`);
+      resolve();
+    });
+
+    archive.on('error', (err) => {
+      reject(err);
+    });
+
+    archive.pipe(output);
+
+    // Add all files from the dist directory
+    archive.directory(sourceDir, false);
+    archive.finalize();
+  });
+}
 
 // Enhanced plugin to copy static files and handle Chrome extension specifics
 function chromeExtensionPlugin() {
@@ -36,7 +64,7 @@ function chromeExtensionPlugin() {
         }
       });
     },
-    writeBundle() {
+    async writeBundle() {
       console.log('📂 Copying static files...');
       
       // Copy HTML files
@@ -71,8 +99,9 @@ function chromeExtensionPlugin() {
       }
       
       // Validate manifest.json
+      let manifest;
       try {
-        const manifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf8'));
+        manifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf8'));
         if (!manifest.manifest_version) {
           console.warn('⚠️  Warning: manifest.json missing manifest_version');
         }
@@ -82,6 +111,27 @@ function chromeExtensionPlugin() {
       }
       
       console.log('📦 Static files copied successfully');
+      
+      // Create zip package if enabled
+      if (process.env.CREATE_ZIP !== 'false') {
+        try {
+          // Ensure packages directory exists
+          const packagesDir = 'packages';
+          if (!fs.existsSync(packagesDir)) {
+            fs.mkdirSync(packagesDir, { recursive: true });
+          }
+
+          // Generate filename with version and timestamp
+          const version = manifest?.version || '1.0.0';
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+          const zipFileName = `${packagesDir}/chrome-safe-area-plugin-v${version}-${timestamp}.zip`;
+          
+          await createZipPackage('dist', zipFileName);
+          console.log('🎉 Extension package ready for Chrome Web Store!');
+        } catch (error) {
+          console.error('❌ Error creating zip package:', error);
+        }
+      }
     },
     buildStart() {
       console.log('🚀 Building Chrome Safe Area Extension with Vite...');
