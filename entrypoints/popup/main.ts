@@ -1,6 +1,6 @@
-import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets, MockupOptions } from '../../types/global.js';
+import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets, MockupOptions, CustomCSSVariables } from '../../types/global.js';
 import { DEVICES } from '../../src/shared/devices.js';
-import { sendMessageToTab, isValidTabUrl } from '../../src/shared/utils.js';
+import { sendMessageToTab, isValidTabUrl, getDefaultCSSVariables } from '../../src/shared/utils.js';
 import { PhoneMockup } from '../../src/phone-mockup.js';
 
 class SafeAreaPopup {
@@ -15,6 +15,7 @@ class SafeAreaPopup {
   private showDeviceFrame: boolean = false;
   private showHardwareRegions: boolean = true;
   private showDebugOverlay: boolean = true;
+  private customCSSVariables: CustomCSSVariables = getDefaultCSSVariables();
   
   constructor() {
     this.init();
@@ -30,7 +31,7 @@ class SafeAreaPopup {
 
   private async loadState(): Promise<void> {
     try {
-      const result = await chrome.storage.sync.get(['device', 'enabled', 'customInsets', 'mockupOptions', 'showDeviceFrame', 'showHardwareRegions', 'showDebugOverlay']);
+      const result = await chrome.storage.sync.get(['device', 'enabled', 'customInsets', 'mockupOptions', 'showDeviceFrame', 'showHardwareRegions', 'showDebugOverlay', 'customCSSVariables']);
       this.currentDevice = result.device || 'none';
       this.isEnabled = result.enabled || false;
       this.customInsets = result.customInsets || { top: 0, bottom: 0, left: 0, right: 0 };
@@ -38,6 +39,7 @@ class SafeAreaPopup {
       this.showDeviceFrame = result.showDeviceFrame || false;
       this.showHardwareRegions = result.showHardwareRegions !== false; // Default to true
       this.showDebugOverlay = result.showDebugOverlay !== false; // Default to true
+      this.customCSSVariables = result.customCSSVariables || getDefaultCSSVariables();
     } catch (error) {
       console.error('Error loading state:', error);
     }
@@ -52,7 +54,8 @@ class SafeAreaPopup {
         mockupOptions: this.mockupOptions,
         showDeviceFrame: this.showDeviceFrame,
         showHardwareRegions: this.showHardwareRegions,
-        showDebugOverlay: this.showDebugOverlay
+        showDebugOverlay: this.showDebugOverlay,
+        customCSSVariables: this.customCSSVariables
       });
     } catch (error) {
       console.error('Error saving state:', error);
@@ -127,6 +130,26 @@ class SafeAreaPopup {
     }
     if (toggleHardwareRegionsBtn) {
       toggleHardwareRegionsBtn.addEventListener('click', this.handleToggleHardwareRegions.bind(this));
+    }
+
+    // CSS Variables controls
+    const cssVarInputs = ['cssVarTop', 'cssVarBottom', 'cssVarLeft', 'cssVarRight'];
+    cssVarInputs.forEach(id => {
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) {
+        input.addEventListener('input', this.handleCSSVariableInput.bind(this));
+      }
+    });
+
+    // CSS Variables buttons
+    const applyCSSVarsBtn = document.getElementById('applyCSSVars') as HTMLButtonElement;
+    const resetCSSVarsBtn = document.getElementById('resetCSSVars') as HTMLButtonElement;
+    
+    if (applyCSSVarsBtn) {
+      applyCSSVarsBtn.addEventListener('click', this.handleApplyCSSVariables.bind(this));
+    }
+    if (resetCSSVarsBtn) {
+      resetCSSVarsBtn.addEventListener('click', this.handleResetCSSVariables.bind(this));
     }
 
     // Update button states
@@ -247,6 +270,34 @@ class SafeAreaPopup {
     this.sendMessageToContentScript();
   }
 
+  private handleCSSVariableInput(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const property = target.id.replace('cssVar', '').toLowerCase() as keyof CustomCSSVariables;
+    
+    // Remove invalid characters and ensure valid CSS variable name
+    let value = target.value.replace(/[^a-zA-Z0-9-_]/g, '');
+    if (value && !value.match(/^[a-zA-Z-_]/)) {
+      value = 'var-' + value;
+    }
+    
+    this.customCSSVariables[property] = value || getDefaultCSSVariables()[property];
+    target.value = this.customCSSVariables[property];
+  }
+
+  private async handleApplyCSSVariables(): Promise<void> {
+    await this.saveState();
+    this.updateCSSVariablesDisplay();
+    this.sendMessageToContentScript();
+  }
+
+  private async handleResetCSSVariables(): Promise<void> {
+    this.customCSSVariables = getDefaultCSSVariables();
+    this.updateCSSVariablesInputs();
+    await this.saveState();
+    this.updateCSSVariablesDisplay();
+    this.sendMessageToContentScript();
+  }
+
   private updateMockupControls(): void {
     const toggleSafeAreaBtn = document.getElementById('toggleSafeArea') as HTMLButtonElement;
     const toggleContentBtn = document.getElementById('toggleContent') as HTMLButtonElement;
@@ -288,6 +339,36 @@ class SafeAreaPopup {
     } else {
       popupContent.classList.add('disabled');
       deviceSelect.disabled = true;
+    }
+
+    // Update CSS variables inputs and display
+    this.updateCSSVariablesInputs();
+    this.updateCSSVariablesDisplay();
+  }
+
+  private updateCSSVariablesInputs(): void {
+    const cssVarTop = document.getElementById('cssVarTop') as HTMLInputElement;
+    const cssVarBottom = document.getElementById('cssVarBottom') as HTMLInputElement;
+    const cssVarLeft = document.getElementById('cssVarLeft') as HTMLInputElement;
+    const cssVarRight = document.getElementById('cssVarRight') as HTMLInputElement;
+
+    if (cssVarTop) cssVarTop.value = this.customCSSVariables.top;
+    if (cssVarBottom) cssVarBottom.value = this.customCSSVariables.bottom;
+    if (cssVarLeft) cssVarLeft.value = this.customCSSVariables.left;
+    if (cssVarRight) cssVarRight.value = this.customCSSVariables.right;
+  }
+
+  private updateCSSVariablesDisplay(): void {
+    const currentCSSVars = document.getElementById('currentCSSVars') as HTMLElement;
+    if (currentCSSVars) {
+      const vars = this.customCSSVariables;
+      const isDefault = JSON.stringify(vars) === JSON.stringify(getDefaultCSSVariables());
+      
+      if (isDefault) {
+        currentCSSVars.textContent = '--safe-area-inset-*';
+      } else {
+        currentCSSVars.textContent = `--${vars.top}, --${vars.bottom}, --${vars.left}, --${vars.right}`;
+      }
     }
   }
 
@@ -362,7 +443,8 @@ class SafeAreaPopup {
           showDebugOverlay: this.showDebugOverlay,
           showDeviceFrame: this.showDeviceFrame,
           showHardwareRegions: this.showHardwareRegions,
-          mockupOptions: this.mockupOptions
+          mockupOptions: this.mockupOptions,
+          customCSSVariables: this.customCSSVariables
         },
         insets: this.isEnabled && this.currentDevice && DEVICES[this.currentDevice] 
           ? DEVICES[this.currentDevice]!.safeAreaInsets 

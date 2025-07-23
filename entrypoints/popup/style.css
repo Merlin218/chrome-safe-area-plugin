@@ -326,6 +326,13 @@ input:checked + .slider:before {
   transition: border-color 0.2s ease;
 }
 
+.input-group input[type="text"] {
+  width: 180px;
+  text-align: left;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+}
+
 .input-group input:focus {
   outline: none;
   border-color: #667eea;
@@ -350,6 +357,33 @@ input:checked + .slider:before {
 }
 
 .apply-btn:active {
+  transform: translateY(0);
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.reset-btn {
+  padding: 10px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);
+}
+
+.reset-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.reset-btn:active {
   transform: translateY(0);
 }
 

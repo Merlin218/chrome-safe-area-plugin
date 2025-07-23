@@ -1,12 +1,11 @@
-import type { SafeAreaInsets, SafeAreaMessage } from '../types/global.js';
+import type { SafeAreaInsets, SafeAreaMessage, CustomCSSVariables } from '../types/global.js';
 import { DEVICES } from '../src/shared/devices.js';
-import { createSafeAreaCSS, BASE_SAFE_AREA_STYLES, createSafeAreaEvent, debounce } from '../src/shared/utils.js';
+import { createSafeAreaCSS, createBaseSafeAreaStyles, createSafeAreaEvent, debounce, getDefaultCSSVariables } from '../src/shared/utils.js';
 import { PhoneFrameSimple } from '../src/phone-frame-simple.js';
 import { HardwareRegionsRenderer } from '../src/hardware-renderer.js';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
-  runAt: 'document_start',
   main(ctx) {
     console.log('Content script initialized');
     
@@ -33,6 +32,7 @@ class SafeAreaInjector {
   private routeChangeTimeout: number | null = null;
   private debugOverlayObserver: MutationObserver | null = null;
   private overlayRecreationTimeout: number | null = null;
+  private customCSSVariables: CustomCSSVariables = getDefaultCSSVariables();
   
   constructor() {
     this.init();
@@ -66,12 +66,13 @@ class SafeAreaInjector {
 
   private async loadStoredState(): Promise<void> {
     try {
-      const result = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDeviceFrame', 'showHardwareRegions', 'showDebugOverlay', 'debugMode']);
+      const result = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDeviceFrame', 'showHardwareRegions', 'showDebugOverlay', 'debugMode', 'customCSSVariables']);
       this.isEnabled = result.enabled || false;
       this.currentDevice = result.device || null;
       this.debugMode = result.debugMode || false;
       this.showHardwareRegions = result.showHardwareRegions !== false; // Default to true
       this.showDebugOverlay = result.showDebugOverlay !== false; // Default to true
+      this.customCSSVariables = result.customCSSVariables || getDefaultCSSVariables();
       
       if (this.isEnabled && result.device && DEVICES[result.device]) {
         const device = DEVICES[result.device];
@@ -407,6 +408,12 @@ class SafeAreaInjector {
           chrome.storage.sync.set({ showDebugOverlay: this.showDebugOverlay });
         }
         
+        // Handle custom CSS variables setting
+        if (message.settings?.customCSSVariables !== undefined) {
+          this.customCSSVariables = message.settings.customCSSVariables;
+          chrome.storage.sync.set({ customCSSVariables: this.customCSSVariables });
+        }
+        
         this.updateStyles();
         this.updatePhoneFrame();
         this.updateHardwareRegions();
@@ -418,58 +425,7 @@ class SafeAreaInjector {
 
   private injectInitialStyles(): void {
     // Add base styles that might be useful for developers
-    const baseStyles = `
-/* Safe Area Simulator - Base Styles */
-.safe-area-simulator-debug {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 999999;
-}
-
-.safe-area-simulator-debug::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-width: var(--safe-area-inset-top, 0) var(--safe-area-inset-right, 0) var(--safe-area-inset-bottom, 0) var(--safe-area-inset-left, 0);
-  background: 
-    linear-gradient(to bottom, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--safe-area-inset-top, 0), transparent var(--safe-area-inset-top, 0)),
-    linear-gradient(to top, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--safe-area-inset-bottom, 0), transparent var(--safe-area-inset-bottom, 0)),
-    linear-gradient(to right, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--safe-area-inset-left, 0), transparent var(--safe-area-inset-left, 0)),
-    linear-gradient(to left, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--safe-area-inset-right, 0), transparent var(--safe-area-inset-right, 0));
-}
-
-/* Utility classes for developers */
-.safe-area-inset-top {
-  padding-top: env(safe-area-inset-top, var(--safe-area-inset-top, 0)) !important;
-}
-
-.safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom, var(--safe-area-inset-bottom, 0)) !important;
-}
-
-.safe-area-inset-left {
-  padding-left: env(safe-area-inset-left, var(--safe-area-inset-left, 0)) !important;
-}
-
-.safe-area-inset-right {
-  padding-right: env(safe-area-inset-right, var(--safe-area-inset-right, 0)) !important;
-}
-
-.safe-area-inset-all {
-  padding: 
-    env(safe-area-inset-top, var(--safe-area-inset-top, 0))
-    env(safe-area-inset-right, var(--safe-area-inset-right, 0))
-    env(safe-area-inset-bottom, var(--safe-area-inset-bottom, 0))
-    env(safe-area-inset-left, var(--safe-area-inset-left, 0)) !important;
-}
-`;
+    const baseStyles = createBaseSafeAreaStyles(this.customCSSVariables);
 
     if (this.styleElement) {
       this.styleElement.textContent = baseStyles;
@@ -485,23 +441,8 @@ class SafeAreaInjector {
 
     const { top, bottom, left, right } = this.isEnabled ? currentDevice.safeAreaInsets : { top: 0, bottom: 0, left: 0, right: 0 };
 
-    // Create CSS custom properties
-    const safeAreaStyles = `
-:root {
-  --safe-area-inset-top: ${top}px;
-  --safe-area-inset-bottom: ${bottom}px;
-  --safe-area-inset-left: ${left}px;
-  --safe-area-inset-right: ${right}px;
-}
-
-/* Override env() function for safe area insets */
-html {
-  --safe-area-inset-top: ${top}px;
-  --safe-area-inset-bottom: ${bottom}px;
-  --safe-area-inset-left: ${left}px;
-  --safe-area-inset-right: ${right}px;
-}
-`;
+    // Create CSS custom properties with custom variable names
+    const safeAreaStyles = createSafeAreaCSS({ top, bottom, left, right }, this.customCSSVariables);
 
     // Update existing styles
     const existingStyles = this.styleElement.textContent || '';

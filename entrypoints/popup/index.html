@@ -124,10 +124,38 @@
                     </div>
                 </details>
             </div>
+
+            <div class="custom-section">
+                <details>
+                    <summary>Custom CSS Variable Names</summary>
+                    <div class="custom-inputs">
+                        <div class="input-group">
+                            <label for="cssVarTop">Top variable name:</label>
+                            <input type="text" id="cssVarTop" placeholder="safe-area-inset-top" value="safe-area-inset-top">
+                        </div>
+                        <div class="input-group">
+                            <label for="cssVarBottom">Bottom variable name:</label>
+                            <input type="text" id="cssVarBottom" placeholder="safe-area-inset-bottom" value="safe-area-inset-bottom">
+                        </div>
+                        <div class="input-group">
+                            <label for="cssVarLeft">Left variable name:</label>
+                            <input type="text" id="cssVarLeft" placeholder="safe-area-inset-left" value="safe-area-inset-left">
+                        </div>
+                        <div class="input-group">
+                            <label for="cssVarRight">Right variable name:</label>
+                            <input type="text" id="cssVarRight" placeholder="safe-area-inset-right" value="safe-area-inset-right">
+                        </div>
+                        <div class="button-group">
+                            <button id="applyCSSVars" class="apply-btn">Apply CSS Variables</button>
+                            <button id="resetCSSVars" class="reset-btn">Reset to Default</button>
+                        </div>
+                    </div>
+                </details>
+            </div>
         </main>
 
         <footer class="popup-footer">
-            <p class="footer-text">CSS variables injected: <code>--safe-area-inset-*</code></p>
+            <p class="footer-text">CSS variables injected: <code id="currentCSSVars">--safe-area-inset-*</code></p>
         </footer>
     </div>
 

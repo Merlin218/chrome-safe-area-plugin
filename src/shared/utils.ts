@@ -1,5 +1,5 @@
 // Shared utilities for the Safe Area Simulator extension
-import type { SafeAreaInsets, SafeAreaMessage } from '../../types/global.js';
+import type { SafeAreaInsets, SafeAreaMessage, CustomCSSVariables } from '../../types/global.js';
 import { DEVICES } from './devices.js';
 
 /**
@@ -11,30 +11,47 @@ export function getDeviceInsets(deviceKey: string): SafeAreaInsets {
 }
 
 /**
- * Create safe area CSS custom properties
+ * Get default CSS variable names
  */
-export function createSafeAreaCSS(insets: SafeAreaInsets): string {
+export function getDefaultCSSVariables(): CustomCSSVariables {
+  return {
+    top: 'safe-area-inset-top',
+    bottom: 'safe-area-inset-bottom',
+    left: 'safe-area-inset-left',
+    right: 'safe-area-inset-right'
+  };
+}
+
+/**
+ * Create safe area CSS custom properties with custom variable names
+ */
+export function createSafeAreaCSS(insets: SafeAreaInsets, customVariables?: CustomCSSVariables): string {
+  const vars = customVariables || getDefaultCSSVariables();
+  
   return `
 :root {
-  --safe-area-inset-top: ${insets.top}px;
-  --safe-area-inset-bottom: ${insets.bottom}px;
-  --safe-area-inset-left: ${insets.left}px;
-  --safe-area-inset-right: ${insets.right}px;
+  --${vars.top}: ${insets.top}px;
+  --${vars.bottom}: ${insets.bottom}px;
+  --${vars.left}: ${insets.left}px;
+  --${vars.right}: ${insets.right}px;
 }
 
 /* Override env() function for safe area insets */
 html {
-  --safe-area-inset-top: ${insets.top}px;
-  --safe-area-inset-bottom: ${insets.bottom}px;
-  --safe-area-inset-left: ${insets.left}px;
-  --safe-area-inset-right: ${insets.right}px;
+  --${vars.top}: ${insets.top}px;
+  --${vars.bottom}: ${insets.bottom}px;
+  --${vars.left}: ${insets.left}px;
+  --${vars.right}: ${insets.right}px;
 }`;
 }
 
 /**
- * Base styles for safe area visualization
+ * Create base styles for safe area visualization with custom variable names
  */
-export const BASE_SAFE_AREA_STYLES = `
+export function createBaseSafeAreaStyles(customVariables?: CustomCSSVariables): string {
+  const vars = customVariables || getDefaultCSSVariables();
+  
+  return `
 /* Safe Area Simulator - Base Styles */
 .safe-area-simulator-debug {
   position: fixed;
@@ -53,38 +70,45 @@ export const BASE_SAFE_AREA_STYLES = `
   left: 0;
   right: 0;
   bottom: 0;
-  border-width: var(--safe-area-inset-top, 0) var(--safe-area-inset-right, 0) var(--safe-area-inset-bottom, 0) var(--safe-area-inset-left, 0);
+  border-width: var(--${vars.top}, 0) var(--${vars.right}, 0) var(--${vars.bottom}, 0) var(--${vars.left}, 0);
   background: 
-    linear-gradient(to bottom, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--safe-area-inset-top, 0), transparent var(--safe-area-inset-top, 0)),
-    linear-gradient(to top, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--safe-area-inset-bottom, 0), transparent var(--safe-area-inset-bottom, 0)),
-    linear-gradient(to right, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--safe-area-inset-left, 0), transparent var(--safe-area-inset-left, 0)),
-    linear-gradient(to left, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--safe-area-inset-right, 0), transparent var(--safe-area-inset-right, 0));
+    linear-gradient(to bottom, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--${vars.top}, 0), transparent var(--${vars.top}, 0)),
+    linear-gradient(to top, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--${vars.bottom}, 0), transparent var(--${vars.bottom}, 0)),
+    linear-gradient(to right, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--${vars.left}, 0), transparent var(--${vars.left}, 0)),
+    linear-gradient(to left, rgba(255, 59, 48, 0.1) 0, rgba(255, 59, 48, 0.1) var(--${vars.right}, 0), transparent var(--${vars.right}, 0));
 }
 
 /* Utility classes for developers */
 .safe-area-inset-top {
-  padding-top: env(safe-area-inset-top, var(--safe-area-inset-top, 0)) !important;
+  padding-top: env(safe-area-inset-top, var(--${vars.top}, 0)) !important;
 }
 
 .safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom, var(--safe-area-inset-bottom, 0)) !important;
+  padding-bottom: env(safe-area-inset-bottom, var(--${vars.bottom}, 0)) !important;
 }
 
 .safe-area-inset-left {
-  padding-left: env(safe-area-inset-left, var(--safe-area-inset-left, 0)) !important;
+  padding-left: env(safe-area-inset-left, var(--${vars.left}, 0)) !important;
 }
 
 .safe-area-inset-right {
-  padding-right: env(safe-area-inset-right, var(--safe-area-inset-right, 0)) !important;
+  padding-right: env(safe-area-inset-right, var(--${vars.right}, 0)) !important;
 }
 
 .safe-area-inset-all {
   padding: 
-    env(safe-area-inset-top, var(--safe-area-inset-top, 0))
-    env(safe-area-inset-right, var(--safe-area-inset-right, 0))
-    env(safe-area-inset-bottom, var(--safe-area-inset-bottom, 0))
-    env(safe-area-inset-left, var(--safe-area-inset-left, 0)) !important;
+    env(safe-area-inset-top, var(--${vars.top}, 0))
+    env(safe-area-inset-right, var(--${vars.right}, 0))
+    env(safe-area-inset-bottom, var(--${vars.bottom}, 0))
+    env(safe-area-inset-left, var(--${vars.left}, 0)) !important;
 }`;
+}
+
+/**
+ * @deprecated Use createBaseSafeAreaStyles() instead
+ * Base styles for safe area visualization
+ */
+export const BASE_SAFE_AREA_STYLES = createBaseSafeAreaStyles();
 
 /**
  * Send message to content script with error handling

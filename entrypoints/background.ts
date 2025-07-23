@@ -1,5 +1,5 @@
-import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets } from '../types/global.js';
-import { getDeviceInsets, sendMessageToTab, isValidTabUrl } from '../src/shared/utils.js';
+import type { SafeAreaSettings, SafeAreaMessage, SafeAreaInsets, CustomCSSVariables } from '../types/global.js';
+import { getDeviceInsets, sendMessageToTab, isValidTabUrl, getDefaultCSSVariables } from '../src/shared/utils.js';
 
 export default defineBackground(() => {
   console.log('Background script initialized');
@@ -30,10 +30,13 @@ class SafeAreaBackground {
   }
 
   private setupTabUpdateListener(): void {
+    // With activeTab permission, we don't automatically inject content scripts
+    // Only inject when user explicitly interacts with the extension
     chrome.tabs.onUpdated.addListener(async (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
-      // When a tab finishes loading, apply current safe area settings
-      if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith('chrome://')) {
-        await this.applyCurrentSettings(tabId);
+      // Note: With activeTab permission, we only inject content script when user clicks the extension
+      // This listener is kept for future use if needed
+      if (changeInfo.status === 'complete' && tab.url) {
+        console.log(`[Safe Area Simulator] Tab ${tabId} finished loading: ${tab.url}`);
       }
     });
   }
@@ -64,7 +67,8 @@ class SafeAreaBackground {
         enabled: false,
         device: 'none',
         customInsets: { top: 0, bottom: 0, left: 0, right: 0 },
-        showDebugOverlay: true
+        showDebugOverlay: true,
+        customCSSVariables: getDefaultCSSVariables()
       });
     } catch (error) {
       console.error('Error setting default settings:', error);
@@ -92,12 +96,13 @@ class SafeAreaBackground {
 
   private async getCurrentSettings(): Promise<SafeAreaSettings | null> {
     try {
-      const settings = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDebugOverlay']);
+      const settings = await chrome.storage.sync.get(['enabled', 'device', 'customInsets', 'showDebugOverlay', 'customCSSVariables']);
       return {
         enabled: settings.enabled || false,
         device: settings.device || 'none',
         customInsets: settings.customInsets || { top: 0, bottom: 0, left: 0, right: 0 },
-        showDebugOverlay: settings.showDebugOverlay !== false
+        showDebugOverlay: settings.showDebugOverlay !== false,
+        customCSSVariables: settings.customCSSVariables || getDefaultCSSVariables()
       };
     } catch (error) {
       console.error('Error getting current settings:', error);

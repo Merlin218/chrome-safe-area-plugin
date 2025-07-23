@@ -120,6 +120,14 @@ interface SafeAreaMessage {
   settings?: SafeAreaSettings;
 }
 
+// Custom CSS variable names configuration
+interface CustomCSSVariables {
+  top: string;
+  bottom: string;
+  left: string;
+  right: string;
+}
+
 // Extension settings interface
 interface SafeAreaSettings {
   enabled: boolean;
@@ -129,6 +137,7 @@ interface SafeAreaSettings {
   showDeviceFrame?: boolean;
   showHardwareRegions?: boolean;
   mockupOptions?: MockupOptions;
+  customCSSVariables?: CustomCSSVariables;
 }
 
 // Phone mockup options
@@ -181,5 +190,6 @@ export {
   MockupOptions,
   PhoneFrameOptions,
   SafeAreaChangeEvent,
-  HardwareRegion
+  HardwareRegion,
+  CustomCSSVariables
 }; 
